@@ -1,0 +1,8 @@
+{
+  "name": "컷앤노트 — 짤·카드 스튜디오",
+  "description": "사진과 손글씨를 조합해 인생네컷 감성의 이미지를 만드는 로컬 편집기",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
