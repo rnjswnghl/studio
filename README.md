@@ -5,7 +5,7 @@
 ## 실행
 
 ```bash
-python -m http.server 4173
+npm run serve
 ```
 
 브라우저에서 `http://localhost:4173`을 엽니다. 별도 설치, 로그인, 서버 업로드가 없습니다.
@@ -24,6 +24,7 @@ python -m http.server 4173
 
 ```bash
 npm test
+npm run samples
 ```
 
 개인정보 보호 근거: 앱 소스에는 `fetch`, `XMLHttpRequest`, `sendBeacon`, `WebSocket` 호출이 없고 이미지 처리는 브라우저 Canvas에서만 일어납니다.
