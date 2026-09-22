@@ -31,10 +31,11 @@
       <section class="intro" aria-labelledby="page-title">
         <p class="eyebrow">PHOTO BOOTH NO. 03 · LOCAL ONLY</p>
         <h1 id="page-title">오늘을 네 컷으로<br /><em>오래 남겨요.</em></h1>
-        <p>사진을 고르고, 문장을 적고, 마음에 드는 프레임을 씌워보세요. 모든 작업은 기기 안에서 끝납니다.</p>
+        <p>사진을 고르고, 원하는 위치와 각도로 스티커와 프레임을 자유롭게 조절하세요. 사진별 개별 확대/이동/순서 변경과 나만의 템플릿 제작까지 지원합니다.</p>
       </section>
 
       <section class="editor-shell" aria-label="이미지 편집기">
+        <!-- 왼쪽 패널: 사진 관리 및 텍스트 / 비율 -->
         <aside class="control-panel" aria-label="편집 도구">
           <div class="panel-heading">
             <span class="step-num">01</span>
@@ -44,16 +45,41 @@
           <label class="drop-zone" id="dropZone" for="imageInput">
             <input id="imageInput" type="file" accept="image/png,image/jpeg" multiple />
             <span class="camera-doodle" aria-hidden="true">⌁</span>
-            <strong>사진 고르기</strong>
+            <strong>사진 고르기 / 드롭</strong>
             <span>PNG · JPEG / 최대 4장</span>
           </label>
           <input id="slotImageInput" class="visually-hidden" type="file" accept="image/png,image/jpeg" />
-          <div class="file-list" id="fileList" aria-live="polite"></div>
+          
+          <div class="slots-manager-box">
+            <div class="slots-header">
+              <small>각 프레임 칸별 사진 (개별 교체 · 순서 교환)</small>
+            </div>
+            <div class="file-list" id="fileList" aria-live="polite"></div>
+          </div>
           <p class="error-message" id="fileError" role="alert"></p>
 
+          <div class="tool-block" id="slotControlBlock">
+            <div class="tool-label"><span>02</span><strong>선택한 사진 칸 조절</strong></div>
+            <p class="tool-desc" id="activeSlotInfo">선택된 칸: 1번 사진 칸</p>
+            <div class="field-col">
+              <label>사진 확대/축소 비율: <span id="slotZoomVal">1.0x</span>
+                <input id="slotZoom" type="range" min="0.8" max="2.5" step="0.05" value="1.0" />
+              </label>
+              <label>사진 회전 각도: <span id="slotRotateVal">0°</span>
+                <input id="slotRotate" type="range" min="-180" max="180" step="1" value="0" />
+              </label>
+              <div class="slot-quick-btns">
+                <button type="button" class="mini-btn" id="slotMoveUp">위/앞 순서로</button>
+                <button type="button" class="mini-btn" id="slotMoveDown">아래/뒤 순서로</button>
+                <button type="button" class="mini-btn" id="slotResetPos">위치 초기화</button>
+                <button type="button" class="mini-btn danger" id="slotRemoveImg">사진 비우기</button>
+              </div>
+            </div>
+          </div>
+
           <div class="tool-block">
-            <div class="tool-label"><span>02</span><strong>한마디 적기</strong></div>
-            <textarea id="caption" maxlength="120" rows="3" placeholder="오늘, 우리, 그리고 빛나는 순간"></textarea>
+            <div class="tool-label"><span>03</span><strong>한마디 기록</strong></div>
+            <textarea id="caption" maxlength="120" rows="2" placeholder="오늘, 우리, 그리고 빛나는 순간"></textarea>
             <div class="field-row">
               <label>글자색 <input id="textColor" type="color" value="#fffaf0" /></label>
               <label>글자 크기 <input id="fontSize" type="range" min="18" max="84" value="42" /></label>
@@ -66,7 +92,7 @@
           </div>
 
           <div class="tool-block">
-            <div class="tool-label"><span>03</span><strong>종이 비율</strong></div>
+            <div class="tool-label"><span>04</span><strong>종이 비율</strong></div>
             <div class="ratio-grid" id="ratios">
               <button class="active" type="button" data-ratio="1:1"><i class="ratio-square"></i><span>1:1<small>피드</small></span></button>
               <button type="button" data-ratio="4:5"><i class="ratio-portrait"></i><span>4:5<small>포스트</small></span></button>
@@ -75,48 +101,114 @@
           </div>
         </aside>
 
+        <!-- 중앙 스테이지: 실시간 캔버스 편집 & 인터랙션 안내 -->
         <section class="stage" aria-label="미리보기">
           <div class="stage-topline">
-            <span>LIVE PREVIEW</span>
+            <span>LIVE INTERACTIVE PREVIEW</span>
             <span id="canvasSize">1080 × 1080 px</span>
           </div>
-          <div class="canvas-wrap">
+          
+          <div class="stage-toolbar">
+            <span class="selection-status" id="selectionStatus">선택된 요소: 없음 (캔버스 항목 클릭)</span>
+            <div class="toolbar-actions">
+              <button type="button" class="tool-act-btn" id="btnDeleteSelected" title="선택된 스티커 삭제">선택 삭제</button>
+              <button type="button" class="tool-act-btn" id="btnBringForward" title="앞으로 가져오기">앞으로</button>
+              <button type="button" class="tool-act-btn" id="btnSendBackward" title="뒤로 보내기">뒤로</button>
+              <button type="button" class="tool-act-btn" id="btnResetSelected" title="변형 초기화">초기화</button>
+            </div>
+          </div>
+
+          <div class="canvas-wrap" id="canvasWrap">
             <canvas id="preview" width="1080" height="1080" aria-label="편집 결과 미리보기"></canvas>
             <div class="empty-canvas" id="emptyCanvas">
               <span>✦</span>
               <strong>사진을 기다리고 있어요</strong>
-              <small>왼쪽에서 한 장 이상 골라주세요</small>
+              <small>왼쪽에서 사진을 넣거나 더블클릭하세요</small>
             </div>
-            <p class="canvas-help">사진 칸을 더블클릭해 교체 · 드래그해 위치 조정</p>
+            <p class="canvas-help">
+              • <strong>스티커/프레임</strong>: 마우스 드래그로 이동, 모서리 핸들로 크기·회전 조절<br />
+              • <strong>사진 칸</strong>: 더블클릭해 사진 교체, 내부 드래그로 화면 위치 이동
+            </p>
           </div>
+
           <div class="download-row">
-            <div><strong id="statusText">자동 저장됨</strong><span>미리보기와 같은 크기로 저장돼요</span></div>
+            <div><strong id="statusText">자동 저장됨</strong><span>모든 스티커·프레임 위치와 각도가 저장돼요</span></div>
             <button class="download-button" id="download" type="button"><span>PNG로 저장</span><b>↓</b></button>
           </div>
         </section>
 
+        <!-- 오른쪽 패널: 프레임 색상, 스타일, 스티커 및 템플릿 커스텀 -->
         <aside class="template-panel" aria-label="프레임과 스티커">
           <div class="panel-heading compact">
-            <span class="step-num">04</span>
-            <div><small>분위기 고르기</small><h2>프레임 보관함</h2></div>
+            <span class="step-num">05</span>
+            <div><small>프레임 색상 & 스타일</small><h2>네컷 프레임 설정</h2></div>
           </div>
+
+          <!-- 프레임 색상 & 커스텀 조절기 -->
+          <div class="frame-customizer">
+            <div class="color-pick-row">
+              <label for="frameBgColor">프레임 바탕색</label>
+              <div class="color-input-wrap">
+                <input id="frameBgColor" type="color" value="#f4ead8" />
+                <span id="frameBgColorHex">#f4ead8</span>
+              </div>
+            </div>
+            <div class="color-pick-row">
+              <label for="frameAccentColor">포인트/테두리색</label>
+              <div class="color-input-wrap">
+                <input id="frameAccentColor" type="color" value="#d16758" />
+                <span id="frameAccentColorHex">#d16758</span>
+              </div>
+            </div>
+            <div class="palette-presets" id="palettePresets" aria-label="추천 색상 팔레트">
+              <button type="button" style="background:#f4ead8;" data-bg="#f4ead8" data-accent="#d16758" title="크림 로즈"></button>
+              <button type="button" style="background:#26221e;" data-bg="#26221e" data-accent="#dfaa4b" title="다크 필름"></button>
+              <button type="button" style="background:#d8d3c7;" data-bg="#d8d3c7" data-accent="#b34f45" title="메탈릭 실버"></button>
+              <button type="button" style="background:#ead0c8;" data-bg="#ead0c8" data-accent="#a9473e" title="베이비 핑크"></button>
+              <button type="button" style="background:#1a2332;" data-bg="#1a2332" data-accent="#64b5f6" title="미드나잇 블루"></button>
+              <button type="button" style="background:#e8f0e6;" data-bg="#e8f0e6" data-accent="#537b5a" title="세이지 그린"></button>
+              <button type="button" style="background:#ffffff;" data-bg="#ffffff" data-accent="#24211d" title="퓨어 화이트"></button>
+            </div>
+            <div class="field-col" style="margin-top:.6rem;">
+              <label>프레임 회전 각도: <span id="frameRotVal">0°</span>
+                <input id="frameRotate" type="range" min="-45" max="45" step="1" value="0" />
+              </label>
+              <label>프레임 여백(마진): <span id="frameMarginVal">보통</span>
+                <input id="frameMargin" type="range" min="0.5" max="1.8" step="0.1" value="1.0" />
+              </label>
+            </div>
+          </div>
+
+          <div class="tool-label" style="margin-top:1.1rem;"><strong>프레임 레이아웃 보관함</strong></div>
           <div class="template-grid" id="templateGrid"></div>
 
+          <!-- 스티커 섹션 (Y2K 메탈릭, 크롬 하트, 버블 펄, 카메라 REC, 필름 등) -->
           <div class="sticker-section">
-            <div class="tool-label"><span>05</span><strong>연필 스티커</strong></div>
+            <div class="tool-label"><span>06</span><strong>다양한 스티커 넣기</strong></div>
+            <div class="sticker-categories" id="stickerCategories">
+              <button type="button" class="sticker-cat-btn active" data-cat="y2k">Y2K 크롬·글라스</button>
+              <button type="button" class="sticker-cat-btn" data-cat="photo">카메라·필름</button>
+              <button type="button" class="sticker-cat-btn" data-cat="doodle">손그림 연필</button>
+            </div>
             <div class="sticker-grid" id="stickerGrid"></div>
-            <button class="remove-sticker" id="removeSticker" type="button">스티커 없이 깔끔하게</button>
+            <div class="sticker-actions-row">
+              <button class="text-act-btn" id="addCustomStickerBtn" type="button">+ 스티커 이미지 업로드</button>
+              <button class="remove-sticker" id="removeAllStickers" type="button">스티커 전체 지우기</button>
+            </div>
+            <input id="customStickerInput" class="visually-hidden" type="file" accept="image/png,image/jpeg" />
           </div>
 
+          <!-- 사용자 템플릿 제작 및 관리 -->
           <div class="template-manager">
-            <label for="templateName">내 템플릿 이름</label>
+            <div class="tool-label"><span>07</span><strong>나만의 템플릿 만들기</strong></div>
+            <label for="templateName">지금 디자인을 새 템플릿으로 등록</label>
             <div class="save-template-row">
-              <input id="templateName" maxlength="24" placeholder="예: 여름밤 네컷" />
+              <input id="templateName" maxlength="24" placeholder="예: 빈티지 디카 네컷" />
               <button id="saveTemplate" type="button">새로 저장</button>
             </div>
             <div class="manager-actions">
               <button id="updateTemplate" type="button">선택 템플릿 덮어쓰기</button>
-              <button id="deleteTemplate" type="button">삭제</button>
+              <button id="deleteTemplate" type="button">선택 템플릿 삭제</button>
             </div>
             <p id="templateMessage" aria-live="polite"></p>
           </div>
@@ -130,7 +222,7 @@
     </main>
 
     <footer>
-      <strong>컷앤노트</strong><span>사진은 서버로 전송되지 않습니다.</span>
+      <strong>컷앤노트</strong><span>사진과 스티커는 모두 기기 브라우저 안에서만 처리됩니다.</span>
       <nav aria-label="법적 안내"><button id="privacyInfo" type="button">개인정보 처리 안내</button><button id="resetApp" type="button">모든 로컬 데이터 지우기</button></nav>
     </footer>
 
