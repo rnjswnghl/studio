@@ -43,9 +43,18 @@ export function validateProject(data) {
   const required = ["version","state","templates"];
   const missing = required.filter((k) => !(k in data));
   if (missing.length) return `필수 항목이 없습니다: ${missing.join(", ")}`;
-  if (data.version !== 1 || !data.state || !RATIOS[data.state.ratio]) return "지원하지 않는 백업 형식입니다.";
+  if (![1,2].includes(data.version) || !data.state || !RATIOS[data.state.ratio]) return "지원하지 않는 백업 형식입니다.";
   if (typeof data.state.caption !== "string" || data.state.caption.length > 120) return "문구 형식이 올바르지 않습니다.";
   if (!Array.isArray(data.templates) || !data.templates.every(isValidTemplate)) return "템플릿 데이터가 올바르지 않습니다.";
+  if (data.version === 2) {
+    if (!Array.isArray(data.state.images) || data.state.images.length > 4) return "사진 데이터가 올바르지 않습니다.";
+    const valid = data.state.images.every((record) => record === null || (
+      record && ["image/png","image/jpeg"].includes(dataUrlType(record.dataUrl)) &&
+      typeof record.name === "string" && record.position &&
+      Number.isFinite(Number(record.position.x)) && Number.isFinite(Number(record.position.y))
+    ));
+    if (!valid) return "사진 데이터가 올바르지 않습니다.";
+  }
   return null;
 }
 
@@ -63,18 +72,27 @@ function setRatio(ratio) {
 function roundedRect(c, x, y, w, h, r) {
   c.beginPath(); c.roundRect(x,y,w,h,r); c.closePath();
 }
-function coverImage(c, img, x, y, w, h) {
+function coverImage(c, img, x, y, w, h, position={x:.5,y:.5}) {
   const ir = img.width / img.height, tr = w / h;
   let sw, sh, sx, sy;
-  if (ir > tr) { sh = img.height; sw = sh * tr; sx = (img.width-sw)/2; sy=0; }
-  else { sw = img.width; sh = sw/tr; sx=0; sy=(img.height-sh)/2; }
+  const px=clamp(Number(position.x),0,1), py=clamp(Number(position.y),0,1);
+  if (ir > tr) { sh = img.height; sw = sh * tr; sx = (img.width-sw)*px; sy=0; }
+  else { sw = img.width; sh = sw/tr; sx=0; sy=(img.height-sh)*py; }
   c.drawImage(img,sx,sy,sw,sh,x,y,w,h);
 }
 function drawPlaceholder(c,x,y,w,h,index) {
   c.fillStyle = index%2 ? "#b9b2a6" : "#ccc4b7"; c.fillRect(x,y,w,h);
   c.strokeStyle="rgba(56,50,44,.25)"; c.lineWidth=Math.max(2,w*.006); c.beginPath(); c.moveTo(x,y+h); c.lineTo(x+w*.36,y+h*.58); c.lineTo(x+w*.56,y+h*.73); c.lineTo(x+w,y+h*.3); c.stroke();
 }
-function drawSlot(c,x,y,w,h,index) { const img=state.images[index % Math.max(state.images.length,1)]; if(img) coverImage(c,img,x,y,w,h); else drawPlaceholder(c,x,y,w,h,index); }
+function imageForSlot(index){return state.images[index] || state.images.find(Boolean) || null;}
+function drawSlot(c,x,y,w,h,index) { const record=imageForSlot(index); if(record?.img) coverImage(c,record.img,x,y,w,h,record.position); else drawPlaceholder(c,x,y,w,h,index); }
+
+function slotRects(w,h,t=activeTemplate()){
+  if(t.frame==="camera"){const m=w*.075,top=h*.17,sw=w*.7,sh=h*.62;return[{x:m+w*.018,y:top+w*.018,w:sw-w*.036,h:sh-w*.036}];}
+  if(t.frame==="fourcut"){const gap=h*.018,m=w*.16,top=h*.045,bottom=h*.13,sh=(h-top-bottom-gap*3)/4;return Array.from({length:4},(_,i)=>({x:m+w*.012,y:top+i*(sh+gap)+w*.012,w:w-m*2-w*.024,h:sh-w*.024}));}
+  if(t.frame==="film"){const m=w*.055,gap=w*.025,cellW=(w-m*2-gap)/2,cellH=(h-m*2-gap)/2;return Array.from({length:4},(_,i)=>({x:m+(i%2)*(cellW+gap),y:m+18+Math.floor(i/2)*(cellH+gap)-9,w:cellW,h:cellH-18}));}
+  const m=w*.095;return[{x:m+w*.022,y:m+w*.022,w:w-2*m-w*.044,h:h-2*m-h*.16}];
+}
 
 function drawFrame(c,w,h,t) {
   if (t.frame === "camera") drawCamera(c,w,h,t);
@@ -133,11 +151,30 @@ function renderStickers(){ $("#stickerGrid").innerHTML=Object.entries(STICKERS).
 async function handleImages(files){
   $("#fileError").textContent=""; const list=[...files].slice(0,4); if(!list.length)return;
   if(list.some((f)=>!["image/png","image/jpeg"].includes(f.type))){$("#fileError").textContent="PNG 또는 JPEG 파일만 사용할 수 있어요.";return;}
-  try{const loaded=await Promise.all(list.map(loadImageFile)); state.images=loaded; renderFileList(list); draw(); scheduleSave();}
+  try{state.images=await Promise.all(list.map(loadImageFile));renderFileList();draw();scheduleSave();}
   catch{$("#fileError").textContent="이미지를 읽지 못했어요. 손상되지 않은 파일인지 확인해주세요.";}
 }
-function loadImageFile(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject()};img.src=url;});}
-function renderFileList(files){const old=$("#fileList");old.innerHTML="";files.forEach((file,i)=>{const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${file.name}`;img.src=URL.createObjectURL(file);img.onload=()=>URL.revokeObjectURL(img.src);old.append(img);});}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});}
+function imageFromDataUrl(dataUrl){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error("이미지 데이터를 읽지 못했습니다."));img.src=dataUrl;});}
+async function loadImageFile(file){const dataUrl=await fileToDataUrl(file);const img=await imageFromDataUrl(dataUrl);return{img,dataUrl,name:file.name,type:file.type,position:{x:.5,y:.5}};}
+async function restoreImageRecord(record){const img=await imageFromDataUrl(record.dataUrl);return{img,dataUrl:record.dataUrl,name:record.name||"복원한 사진",type:record.type||dataUrlType(record.dataUrl),position:normalisePosition(record.position)};}
+function dataUrlType(value){return /^data:(image\/(?:png|jpeg));base64,/i.exec(value)?.[1]?.toLowerCase()||"";}
+function normalisePosition(value){return{x:clamp(Number(value?.x),0,1),y:clamp(Number(value?.y),0,1)};}
+function clamp(value,min,max){return Number.isFinite(value)?Math.min(max,Math.max(min,value)):(min+max)/2;}
+function renderFileList(){const old=$("#fileList");old.innerHTML="";state.images.forEach((record,i)=>{if(!record)return;const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${record.name}`;img.src=record.dataUrl;old.append(img);});}
+
+let pendingSlot=0,dragState=null;
+function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
+function slotAt(event){const p=canvasPoint(event);return slotRects(canvas.width,canvas.height).findIndex(r=>p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h);}
+async function loadIntoSlot(file,index){if(!file)return;try{if(!["image/png","image/jpeg"].includes(file.type))throw new Error("PNG 또는 JPEG 파일만 사용할 수 있어요.");state.images[index]=await loadImageFile(file);renderFileList();draw();scheduleSave();$("#fileError").textContent="";}catch(err){$("#fileError").textContent=err.message||"이미지를 읽지 못했어요.";}}
+function bindCanvasEditing(){
+  canvas.addEventListener("dblclick",event=>{const index=slotAt(event);if(index<0)return;pendingSlot=index;$("#slotImageInput").click();});
+  $("#slotImageInput").addEventListener("change",event=>{loadIntoSlot(event.target.files[0],pendingSlot);event.target.value="";});
+  canvas.addEventListener("pointerdown",event=>{const index=slotAt(event),record=imageForSlot(index);if(index<0||!record)return;if(!state.images[index])state.images[index]={...record,position:{...record.position}};const activeRecord=state.images[index];const p=canvasPoint(event);dragState={index,record:activeRecord,start:p,origin:{...activeRecord.position}};canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");});
+  canvas.addEventListener("pointermove",event=>{if(!dragState)return;const p=canvasPoint(event),rect=slotRects(canvas.width,canvas.height)[dragState.index];dragState.record.position={x:clamp(dragState.origin.x-(p.x-dragState.start.x)/rect.w,0,1),y:clamp(dragState.origin.y-(p.y-dragState.start.y)/rect.h,0,1)};draw();});
+  const finish=()=>{if(!dragState)return;dragState=null;canvas.classList.remove("dragging");scheduleSave();};
+  canvas.addEventListener("pointerup",finish);canvas.addEventListener("pointercancel",finish);
+}
 
 function bindEvents(){
   $("#imageInput").addEventListener("change",(e)=>handleImages(e.target.files)); const dz=$("#dropZone");
@@ -155,10 +192,12 @@ function bindEvents(){
   $("#privacyInfo").addEventListener("click",()=>$("#infoDialog").showModal());
   $("#saveTemplate").addEventListener("click",saveTemplate); $("#updateTemplate").addEventListener("click",updateTemplate); $("#deleteTemplate").addEventListener("click",deleteTemplate);
   $("#resetApp").addEventListener("click",()=>{if(confirm("저장한 설정과 사용자 템플릿을 모두 지울까요?")){localStorage.removeItem("cutnote-state");localStorage.removeItem("cutnote-templates");location.reload();}});
+  bindCanvasEditing();
 }
 function downloadPng(){const a=document.createElement("a");a.download=`cutnote-${state.ratio.replace(":","x")}-${Date.now()}.png`;a.href=canvas.toDataURL("image/png");a.click();}
-function exportProject(){const payload={version:1,exportedAt:new Date().toISOString(),state:{...state,images:[]},templates:userTemplates};const a=document.createElement("a");a.download="cutnote-project.json";a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
-async function importProject(e){const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const error=validateProject(data);if(error)throw new Error(error);const nextTemplates=data.templates; const nextState={...state,...data.state,images:[]}; userTemplates=nextTemplates;Object.assign(state,nextState);persistTemplates();renderTemplates();renderStickers();syncControls();setRatio(state.ratio);$("#importDialog").close();$("#jsonError").textContent="";}catch(err){$("#jsonError").textContent=err instanceof SyntaxError?"JSON 문법이 손상되었습니다. 기존 작업은 유지됩니다.":err.message;}finally{e.target.value="";}}
+function serialiseImage(record){return record?{name:record.name,type:record.type,dataUrl:record.dataUrl,position:normalisePosition(record.position)}:null;}
+function exportProject(){const payload={version:2,exportedAt:new Date().toISOString(),state:{...state,images:state.images.map(serialiseImage)},templates:userTemplates};const a=document.createElement("a");a.download="cutnote-project.json";a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+async function importProject(e){const file=e.target.files[0];if(!file)return;try{const data=JSON.parse(await file.text());const error=validateProject(data);if(error)throw new Error(error);const restoredImages=await Promise.all((data.state.images||[]).map(record=>record?restoreImageRecord(record):null));const nextTemplates=data.templates;const nextState={...state,...data.state,images:restoredImages};userTemplates=nextTemplates;Object.assign(state,nextState);persistTemplates();renderTemplates();renderStickers();renderFileList();syncControls();setRatio(state.ratio);$("#importDialog").close();$("#jsonError").textContent="";scheduleSave();}catch(err){$("#jsonError").textContent=err instanceof SyntaxError?"JSON 문법이 손상되었습니다. 기존 작업은 유지됩니다.":`${err.message} 기존 작업은 유지됩니다.`;}finally{e.target.value="";}}
 function templateFromState(id,name){const t=activeTemplate();return{id,name,subtitle:"my preset",frame:t.frame,ratio:state.ratio,color:t.color,accent:t.accent||"#c95745",caption:state.caption,textColor:state.textColor,fontSize:state.fontSize,textPosition:state.textPosition,sticker:state.sticker};}
 function saveTemplate(){const name=$("#templateName").value.trim();if(!name){$("#templateMessage").textContent="이름을 먼저 적어주세요.";return;}const t=templateFromState(uid(),name);userTemplates.push(t);persistTemplates();state.templateId=t.id;selectedUserTemplateId=t.id;renderTemplates();$("#templateMessage").textContent=`‘${name}’ 템플릿을 저장했어요.`;}
 function updateTemplate(){if(!selectedUserTemplateId){$("#templateMessage").textContent="수정할 내 템플릿을 먼저 선택해주세요.";return;}const old=userTemplates.find(t=>t.id===selectedUserTemplateId);const name=$("#templateName").value.trim()||old.name;userTemplates=userTemplates.map(t=>t.id===selectedUserTemplateId?templateFromState(t.id,name):t);persistTemplates();renderTemplates();$("#templateMessage").textContent=`‘${name}’ 템플릿을 업데이트했어요.`;}
@@ -171,6 +210,6 @@ const samples=[
   {name:"네 컷의 오후",meta:"9:16 · 크림 네컷",ratio:"9:16",templateId:"life-four",caption:"우리의 작은 오후",sticker:"heart",textColor:"#642f2b",fontSize:44,textPosition:"bottom"},
   {name:"필름 속 주말",meta:"1:1 · 필름",ratio:"1:1",templateId:"film-noir",caption:"SUN. 4:32 PM",sticker:"planet",textColor:"#f1dec2",fontSize:38,textPosition:"center"},
 ];
-function renderSamples(){const grid=$("#sampleGrid");samples.forEach((sample,i)=>{const button=document.createElement("button");button.type="button";button.className="sample-card";button.innerHTML=`<canvas width="540" height="${Math.round(540*RATIOS[sample.ratio][1]/1080)}"></canvas><strong>${sample.name}</strong><span>${sample.meta}</span>`;const sc=button.querySelector("canvas");const colors=["#8f8a7f","#c9b2a1","#8a776d"];const off=document.createElement("canvas");off.width=720;off.height=720;const oc=off.getContext("2d");const g=oc.createLinearGradient(0,0,720,720);g.addColorStop(0,colors[i]);g.addColorStop(1,"#403d39");oc.fillStyle=g;oc.fillRect(0,0,720,720);oc.fillStyle="rgba(255,255,255,.16)";for(let n=0;n<10;n++){oc.beginPath();oc.arc(80+n*68,220+(n%3)*70,60,0,Math.PI*2);oc.fill();}const im=new Image();im.onload=()=>{const originalImages=state.images;state.images=[im];draw(sc,sample);state.images=originalImages;};im.src=off.toDataURL();button.addEventListener("click",()=>{applyTemplateSettings(sample);window.scrollTo({top:$("#editor").offsetTop-80,behavior:"smooth"});});grid.append(button);});}
+function renderSamples(){const grid=$("#sampleGrid");const files=["late-summer-4x5.png","four-cuts-9x16.png","film-weekend-1x1.png"];samples.forEach((sample,i)=>{const button=document.createElement("button");button.type="button";button.className="sample-card";button.innerHTML=`<img src="samples/${files[i]}" alt="${sample.name} 완성본" /><strong>${sample.name}</strong><span>${sample.meta}</span>`;button.addEventListener("click",()=>{applyTemplateSettings(sample);window.scrollTo({top:$("#editor").offsetTop-80,behavior:"smooth"});});grid.append(button);});}
 
 restoreState(); bindEvents(); renderTemplates(); renderStickers(); syncControls(); setRatio(state.ratio); renderSamples();

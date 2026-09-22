@@ -29,6 +29,14 @@ test("템플릿 CRUD와 JSON 안전 복원 흐름이 있다", () => {
   assert.match(source, /기존 작업은 유지됩니다/);
 });
 
+test("JSON 백업에 이미지 데이터와 위치가 포함되고 칸 더블클릭 업로드를 지원한다",()=>{
+  assert.match(source,/version:2/);
+  assert.match(source,/dataUrl:record\.dataUrl/);
+  assert.match(source,/position:normalisePosition/);
+  assert.match(source,/addEventListener\("dblclick"/);
+  assert.match(source,/restoreImageRecord/);
+});
+
 test("극단 입력 12종이 렌더 경로에서 안전하게 제한된다", () => {
   const cases = ["가", "한".repeat(120), "A".repeat(120), "😀".repeat(60), "줄1\n줄2", "<>\\\"'&", "１２３４５", "مرحبا", "é", "   ", "#tag @name", "끝." ];
   assert.equal(cases.length, 12);

@@ -47,6 +47,7 @@
             <strong>사진 고르기</strong>
             <span>PNG · JPEG / 최대 4장</span>
           </label>
+          <input id="slotImageInput" class="visually-hidden" type="file" accept="image/png,image/jpeg" />
           <div class="file-list" id="fileList" aria-live="polite"></div>
           <p class="error-message" id="fileError" role="alert"></p>
 
@@ -86,6 +87,7 @@
               <strong>사진을 기다리고 있어요</strong>
               <small>왼쪽에서 한 장 이상 골라주세요</small>
             </div>
+            <p class="canvas-help">사진 칸을 더블클릭해 교체 · 드래그해 위치 조정</p>
           </div>
           <div class="download-row">
             <div><strong id="statusText">자동 저장됨</strong><span>미리보기와 같은 크기로 저장돼요</span></div>
