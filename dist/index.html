@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="사진과 손글씨를 조합해 인생네컷 감성의 이미지를 만드는 로컬 편집기" />
+    <meta property="og:title" content="컷앤노트 — 짤·카드 스튜디오" />
+    <meta property="og:description" content="사진은 브라우저 안에서만 편집하고 PNG로 저장합니다." />
+    <title>컷앤노트 — 짤·카드 스튜디오</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f4eddc'/%3E%3Crect x='10' y='16' width='44' height='34' rx='5' fill='none' stroke='%23231f1a' stroke-width='4'/%3E%3Ccircle cx='32' cy='33' r='10' fill='none' stroke='%23d45f4c' stroke-width='4'/%3E%3Cpath d='M18 16l4-6h11l4 6' fill='none' stroke='%23231f1a' stroke-width='4'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#editor">편집기로 건너뛰기</a>
+    <header class="topbar">
+      <a class="brand" href="#editor" aria-label="컷앤노트 홈">
+        <span class="brand-mark" aria-hidden="true">▣</span>
+        <span>컷앤노트</span>
+      </a>
+      <div class="top-actions">
+        <span class="privacy-note"><i></i> 업로드 없이, 이 브라우저에서만</span>
+        <button class="text-button" id="openImport" type="button">JSON 불러오기</button>
+        <button class="text-button" id="exportJson" type="button">작업 백업</button>
+      </div>
+    </header>
+
+    <main id="editor" class="workspace">
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">PHOTO BOOTH NO. 03 · LOCAL ONLY</p>
+        <h1 id="page-title">오늘을 네 컷으로<br /><em>오래 남겨요.</em></h1>
+        <p>사진을 고르고, 문장을 적고, 마음에 드는 프레임을 씌워보세요. 모든 작업은 기기 안에서 끝납니다.</p>
+      </section>
+
+      <section class="editor-shell" aria-label="이미지 편집기">
+        <aside class="control-panel" aria-label="편집 도구">
+          <div class="panel-heading">
+            <span class="step-num">01</span>
+            <div><small>사진 넣기</small><h2>장면을 골라주세요</h2></div>
+          </div>
+
+          <label class="drop-zone" id="dropZone" for="imageInput">
+            <input id="imageInput" type="file" accept="image/png,image/jpeg" multiple />
+            <span class="camera-doodle" aria-hidden="true">⌁</span>
+            <strong>사진 고르기</strong>
+            <span>PNG · JPEG / 최대 4장</span>
+          </label>
+          <div class="file-list" id="fileList" aria-live="polite"></div>
+          <p class="error-message" id="fileError" role="alert"></p>
+
+          <div class="tool-block">
+            <div class="tool-label"><span>02</span><strong>한마디 적기</strong></div>
+            <textarea id="caption" maxlength="120" rows="3" placeholder="오늘, 우리, 그리고 빛나는 순간"></textarea>
+            <div class="field-row">
+              <label>글자색 <input id="textColor" type="color" value="#fffaf0" /></label>
+              <label>글자 크기 <input id="fontSize" type="range" min="18" max="84" value="42" /></label>
+            </div>
+            <div class="segmented" id="textPosition" aria-label="문구 위치">
+              <button type="button" data-value="top">위</button>
+              <button type="button" data-value="center">가운데</button>
+              <button class="active" type="button" data-value="bottom">아래</button>
+            </div>
+          </div>
+
+          <div class="tool-block">
+            <div class="tool-label"><span>03</span><strong>종이 비율</strong></div>
+            <div class="ratio-grid" id="ratios">
+              <button class="active" type="button" data-ratio="1:1"><i class="ratio-square"></i><span>1:1<small>피드</small></span></button>
+              <button type="button" data-ratio="4:5"><i class="ratio-portrait"></i><span>4:5<small>포스트</small></span></button>
+              <button type="button" data-ratio="9:16"><i class="ratio-story"></i><span>9:16<small>스토리</small></span></button>
+            </div>
+          </div>
+
+          <div class="tool-block color-tool">
+            <div class="tool-label"><span>+</span><strong>프레임 색상</strong></div>
+            <label class="color-picker-row" for="frameColor">
+              <span><strong>내가 원하는 색으로</strong><small>선택한 프레임의 바탕색을 바로 바꿔요.</small></span>
+              <span class="color-input-wrap"><input id="frameColor" type="color" value="#d8d3c7" /><b id="frameColorValue">#D8D3C7</b></span>
+            </label>
+          </div>
+        </aside>
+
+        <section class="stage" aria-label="미리보기">
+          <div class="stage-topline">
+            <span>LIVE PREVIEW</span>
+            <span id="canvasSize">1080 × 1080 px</span>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="preview" width="1080" height="1080" aria-label="편집 결과 미리보기"></canvas>
+            <div class="empty-canvas" id="emptyCanvas">
+              <span>✦</span>
+              <strong>사진을 기다리고 있어요</strong>
+              <small>왼쪽에서 한 장 이상 골라주세요</small>
+            </div>
+          </div>
+          <div class="download-row">
+            <div><strong id="statusText">자동 저장됨</strong><span>미리보기와 같은 크기로 저장돼요</span></div>
+            <button class="download-button" id="download" type="button"><span>PNG로 저장</span><b>↓</b></button>
+          </div>
+        </section>
+
+        <aside class="template-panel" aria-label="프레임과 스티커">
+          <div class="panel-heading compact">
+            <span class="step-num">04</span>
+            <div><small>분위기 고르기</small><h2>프레임 보관함</h2></div>
+          </div>
+          <div class="template-grid" id="templateGrid"></div>
+
+          <div class="sticker-section">
+            <div class="tool-label"><span>05</span><strong>스티커 서랍</strong></div>
+            <div id="stickerGrid"></div>
+            <button class="remove-sticker" id="removeSticker" type="button">스티커 없이 깔끔하게</button>
+          </div>
+
+          <div class="template-manager">
+            <label for="templateName">내 템플릿 이름</label>
+            <div class="save-template-row">
+              <input id="templateName" maxlength="24" placeholder="예: 여름밤 네컷" />
+              <button id="saveTemplate" type="button">새로 저장</button>
+            </div>
+            <div class="manager-actions">
+              <button id="updateTemplate" type="button">선택 템플릿 덮어쓰기</button>
+              <button id="deleteTemplate" type="button">삭제</button>
+            </div>
+            <p id="templateMessage" aria-live="polite"></p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="sample-section" aria-labelledby="sample-title">
+        <div><p class="eyebrow">READY-MADE CUTS</p><h2 id="sample-title">완성본으로 먼저 만나보기</h2></div>
+        <div class="sample-grid" id="sampleGrid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <strong>컷앤노트</strong><span>사진은 서버로 전송되지 않습니다. 디카 사진: David Gerard / Wikimedia Commons (Public Domain)</span>
+      <nav aria-label="법적 안내"><button id="privacyInfo" type="button">개인정보 처리 안내</button><button id="resetApp" type="button">모든 로컬 데이터 지우기</button></nav>
+    </footer>
+
+    <dialog id="importDialog">
+      <form method="dialog">
+        <button class="dialog-close" aria-label="닫기">×</button>
+        <p class="eyebrow">RESTORE PROJECT</p>
+        <h2>작업 백업 불러오기</h2>
+        <p>이 앱에서 내보낸 JSON만 불러올 수 있어요. 문제가 있으면 기존 작업은 그대로 유지합니다.</p>
+        <label class="json-drop" for="jsonInput"><input id="jsonInput" type="file" accept="application/json,.json" /><strong>JSON 파일 선택</strong></label>
+        <p id="jsonError" class="error-message" role="alert"></p>
+      </form>
+    </dialog>
+
+    <dialog id="infoDialog">
+      <form method="dialog">
+        <button class="dialog-close" aria-label="닫기">×</button>
+        <p class="eyebrow">PRIVACY BY DESIGN</p>
+        <h2>사진은 밖으로 나가지 않아요</h2>
+        <p>이미지 합성은 브라우저의 Canvas에서 처리됩니다. 서버 업로드, 계정, 추적 스크립트를 사용하지 않습니다. 템플릿과 작업 설정만 이 브라우저의 localStorage에 저장됩니다.</p>
+        <button class="download-button" value="close">확인했어요</button>
+      </form>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
