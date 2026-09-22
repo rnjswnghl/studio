@@ -20,7 +20,7 @@ body {
     repeating-linear-gradient(0deg, rgba(74,57,36,.018) 0 1px, transparent 1px 4px),
     var(--paper);
   font-family: "Noto Sans KR", sans-serif;
-  min-width: 320px;
+  min-width: 0;
 }
 button, input, textarea { font: inherit; }
 button { color: inherit; }
