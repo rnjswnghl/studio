@@ -72,6 +72,14 @@
               <button type="button" data-ratio="9:16"><i class="ratio-story"></i><span>9:16<small>스토리</small></span></button>
             </div>
           </div>
+
+          <div class="tool-block color-tool">
+            <div class="tool-label"><span>+</span><strong>프레임 색상</strong></div>
+            <label class="color-picker-row" for="frameColor">
+              <span><strong>내가 원하는 색으로</strong><small>선택한 프레임의 바탕색을 바로 바꿔요.</small></span>
+              <span class="color-input-wrap"><input id="frameColor" type="color" value="#d8d3c7" /><b id="frameColorValue">#D8D3C7</b></span>
+            </label>
+          </div>
         </aside>
 
         <section class="stage" aria-label="미리보기">
@@ -101,8 +109,8 @@
           <div class="template-grid" id="templateGrid"></div>
 
           <div class="sticker-section">
-            <div class="tool-label"><span>05</span><strong>연필 스티커</strong></div>
-            <div class="sticker-grid" id="stickerGrid"></div>
+            <div class="tool-label"><span>05</span><strong>스티커 서랍</strong></div>
+            <div id="stickerGrid"></div>
             <button class="remove-sticker" id="removeSticker" type="button">스티커 없이 깔끔하게</button>
           </div>
 
@@ -128,7 +136,7 @@
     </main>
 
     <footer>
-      <strong>컷앤노트</strong><span>사진은 서버로 전송되지 않습니다.</span>
+      <strong>컷앤노트</strong><span>사진은 서버로 전송되지 않습니다. 디카 사진: David Gerard / Wikimedia Commons (Public Domain)</span>
       <nav aria-label="법적 안내"><button id="privacyInfo" type="button">개인정보 처리 안내</button><button id="resetApp" type="button">모든 로컬 데이터 지우기</button></nav>
     </footer>
 
