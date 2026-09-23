@@ -115,8 +115,8 @@ function draw(target=canvas, targetState=state) {
 }
 
 let saveTimer;
-function scheduleSave(){ clearTimeout(saveTimer); $("#statusText").textContent="저장 중…"; saveTimer=setTimeout(()=>{localStorage.setItem("cutnote-state",JSON.stringify({...state,images:[]})); $("#statusText").textContent="자동 저장됨";},180); }
-function restoreState(){try{const saved=JSON.parse(localStorage.getItem("cutnote-state")||"null");if(saved&&RATIOS[saved.ratio])Object.assign(state,saved,{images:[]});}catch{}}
+function scheduleSave(){ clearTimeout(saveTimer); $("#statusText").textContent="저장 중…"; saveTimer=setTimeout(()=>{try{localStorage.setItem("cutnote-state",JSON.stringify({...state,images:state.images.map(serialiseImage)}));$("#statusText").textContent="자동 저장됨";}catch{$("#statusText").textContent="저장 공간 부족 · 작업 백업으로 보관하세요";}},180); }
+async function restoreState(){try{const saved=JSON.parse(localStorage.getItem("cutnote-state")||"null");if(saved&&RATIOS[saved.ratio]){const images=await Promise.all((saved.images||[]).map(r=>r?restoreImageRecord(r):null));Object.assign(state,saved,{images});}}catch{}}
 
 function templateHtml(t){return `<button type="button" class="template-card ${t.id===state.templateId?"active":""}" data-template="${t.id}" style="--preview-color:${t.color}"><span class="template-preview"><img src="${frameAssets[t.frame]?.url||''}" alt="" /></span><strong>${escapeHtml(t.name)}</strong><small>${escapeHtml(t.subtitle||"my preset")}</small></button>`;}
 function renderTemplates(){ $("#templateGrid").innerHTML=allTemplates().map(templateHtml).join(""); }
@@ -153,7 +153,7 @@ function bindCanvasEditing(){
 }
 
 function bindEvents(){
-  
+
   $("#imageInput").addEventListener("change",(e)=>handleImages(e.target.files)); const dz=$("#dropZone");
   ["dragenter","dragover"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.add("drag")})); ["dragleave","drop"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.remove("drag")})); dz.addEventListener("drop",(e)=>handleImages(e.dataTransfer.files));
   $("#caption").addEventListener("input",(e)=>{state.caption=e.target.value;draw();scheduleSave()});
@@ -195,7 +195,7 @@ const undoStack=[],redoStack=[];
 function migrateLayers(){if(!Array.isArray(state.layers))state.layers=state.sticker&&STICKERS[state.sticker]?[stickerLayer(state.sticker,{x:state.stickerX??.82,y:state.stickerY??.17,size:state.stickerSize??.19})]:[];selectedLayer=state.layers.at(-1)?.id??null;}
 function snapshot(){return {...state,layers:structuredClone(state.layers||[]),images:state.images.map(r=>r?{...r,position:{...r.position}}:null)};}
 function checkpoint(){undoStack.push(snapshot());if(undoStack.length>60)undoStack.shift();redoStack.length=0;if($("#undoEdit"))$("#undoEdit").disabled=false;}
-function travel(from,to){if(!from.length)return;to.push(snapshot());Object.assign(state,from.pop());selectedLayer=null;syncControls();renderTemplates();renderFileList();setRatio(state.ratio);refreshEdit();}
+function travel(from,to){if(!from.length)return;to.push(snapshot());Object.assign(state,from.pop());selectedLayer=state.layers.at(-1)?.id??null;syncControls();renderTemplates();renderFileList();setRatio(state.ratio);refreshEdit();}
 function chosen(){return state.layers.find(l=>l.id===selectedLayer);}
 function refreshEdit(){syncLayerControls();renderStickers();draw();scheduleSave();}
 function syncLayerControls(){
@@ -254,7 +254,7 @@ function drawSelection(c,w,h){const l=chosen();if(!l||!STICKERS[l.key])return;co
 async function restoreLayerAssets(layers=[]){for(const l of layers){if(l.dataUrl){const image=await imageFromDataUrl(l.dataUrl);STICKERS[l.key]={label:l.label||"내 스티커",image,url:l.dataUrl};}}}
 async function start(){
  $("#download").disabled=true;$("#statusText").textContent="원본 스티커와 프레임 준비 중…";
- try{await prepareAssets();restoreState();await restoreLayerAssets(state.layers);migrateLayers();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();setRatio(state.ratio);renderSamples();$("#download").disabled=false;}
+ try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);renderSamples();$("#download").disabled=false;}
  catch(error){$("#statusText").textContent=error.message;}
 }
 start();
