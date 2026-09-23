@@ -135,3 +135,13 @@ dialog { width:min(520px,calc(100% - 2rem)); border:1px solid var(--line); backg
 @media (max-width: 760px) { .privacy-note { display:none; }.topbar { padding:0 .75rem; }.top-actions { gap:.55rem; }.text-button { font-size:.68rem; }.workspace { width:min(100% - 1rem, 620px); padding-top:2.5rem; }.intro { grid-template-columns:1fr; gap:1.2rem; }.intro h1 { font-size:clamp(3.4rem,16vw,5.4rem); }.editor-shell { display:flex; flex-direction:column; }.control-panel { border-right:0; border-bottom:1px solid var(--line); }.stage { padding:1.2rem; order:2; }.template-panel { order:3; }.canvas-wrap { min-height:420px; }.template-grid { grid-template-columns:repeat(2,1fr); }.sticker-grid { grid-template-columns:repeat(5,1fr); }.sample-section { grid-template-columns:1fr; gap:2rem; padding-top:4rem; }.sample-grid { gap:.6rem; }.sample-card:nth-child(2) { margin-top:1rem; } footer { flex-wrap:wrap; } footer nav { width:100%; margin-left:0; } }
 @media (max-width: 380px) { .brand > span:last-child { display:none; }.control-panel, .template-panel { padding:1.35rem; }.stage { padding:.8rem; }.canvas-wrap { min-height:360px; }.download-row { align-items:flex-end; }.download-row > div span { display:none; } }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; } }
+.sticker img { width: 100%; height: 100%; object-fit: contain; padding: 5px; }
+#stickerGrid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); max-height:350px; overflow:auto; gap:7px; padding:4px; }
+.sticker { aspect-ratio:1; height:auto; min-width:0; background:#fff; }
+.template-preview { display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.template-preview img { width:100%; height:100%; object-fit:contain; position:relative; z-index:2; }
+.template-preview::before,.template-preview::after { display:none!important; }
+
+.sticker-control{display:flex;align-items:center;justify-content:space-between;font-size:12px;gap:12px;margin-top:12px}.sticker-control input{width:65%;accent-color:#a9473e}
+
+.edit-hint{font-size:12px;line-height:1.6;color:#756d61}.layer-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.layer-actions button{padding:8px 10px;border:1px solid #cfc6b8;border-radius:6px;background:#faf7ef;color:#443c32;cursor:pointer}.layer-actions button:disabled{opacity:.4;cursor:default}.sticker-control select{max-width:180px;min-width:0;padding:6px;border:1px solid #cfc6b8;background:#faf7ef}#preview{touch-action:none}#preview:focus-visible{outline:2px solid #a9473e;outline-offset:4px}
