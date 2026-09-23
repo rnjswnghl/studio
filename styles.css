@@ -148,3 +148,7 @@ dialog { width:min(520px,calc(100% - 2rem)); border:1px solid var(--line); backg
 
 @media(min-width:1101px){.editor-shell{align-items:start;overflow:visible}.stage{position:sticky;top:80px}.canvas-wrap{min-height:0;flex:none;display:block;padding-bottom:36px}.canvas-help{bottom:5px}.stage canvas{max-height:65vh;width:auto;max-width:100%;margin:auto;display:block}}
 .sticker-control input[type=file]{width:170px;max-width:100%;font-size:12px}
+
+.photo-thumb-button { padding: 0; border: 0; background: transparent; cursor: pointer; min-width: 0; }
+.photo-thumb-button small { display: block; font-size: .65rem; }
+.photo-thumb-button:disabled { opacity: .5; cursor: default; }

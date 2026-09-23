@@ -30,8 +30,11 @@ export async function prepareAssets(){
   pearls.forEach((box,i)=>add(`pearl-${i}`,['진주 나비','오팔 소라','자개 고둥','빛나는 소라','구름','조개 한 쌍','불가사리','해파리','핑크 하트','진주 조개','보라 조개','산호','오팔','자개 조개','흰 소라','핑크 별'][i],refs[5],box,255));
   for(let row=0;row<8;row++)for(let col=0;col<4;col++)add(row===0&&col===0?'smile':`emoji-${row}-${col}`,`표정 ${row*4+col+1}`,refs[9],[48+col*128,15+row*136,120,127],255);
   for(let row=0;row<7;row++)for(let col=0;col<4;col++)add(`mood-${row}-${col}`,`무드 ${row*4+col+1}`,refs[10],[col*288,row*292,288,292],229);
-  // Keep the supplied glass and bubble artwork intact, including embedded marks.
-  for(const [id,key,label] of [[1,'glass-heart','유리 하트 · 원본 배경 포함'],[6,'glass-spark','유리 반짝 · 원본 배경 포함'],[7,'glass-moon','유리 달 · 원본 배경 포함'],[2,'bubble-sheet','버블 시트 · 원본 배경/워터마크 포함']])add(key,label,refs[id],[0,0,refs[id].width,refs[id].height],null);
+  // RGBA cutouts replace references with a baked-in checkerboard.
+  for(const [key,label] of [['glass-heart','유리 하트'],['glass-spark','유리 반짝'],['glass-moon','유리 달'],['bubble-sheet','버블 시트']]){
+    const image=await load(`assets/stickers/${key}.png`);
+    add(key,label,image,[0,0,image.width,image.height],null);
+  }
   for(let row=0;row<5;row++)for(let col=0;col<3;col++)add('metal-heart-'+row+'-'+col,'메탈·유리 하트 '+(row*3+col+1),refs[3],[col*187,row*199,187,199],247);
   const extraEmoji=[[9,40,122,135],[139,40,115,133],[257,42,110,129],[372,43,104,115],[473,43,99,136],[565,58,83,106],[649,83,81,90],[0,173,140,124],[139,175,134,126],[275,168,116,137],[391,172,128,131],[522,170,95,132],[620,186,114,125],[9,308,131,125],[141,304,146,127],[289,299,135,134],[428,306,113,128],[568,307,135,119],[13,437,119,132],[140,436,128,139],[278,440,105,116],[385,436,130,131],[519,446,107,115],[627,456,98,109],[16,567,116,128],[139,570,110,119],[255,556,117,131],[378,560,118,129],[504,570,112,126],[618,570,114,132]];
   extraEmoji.forEach((box,i)=>add('extra-emoji-'+i,'추가 표정 '+(i+1),refs[8],box,243));

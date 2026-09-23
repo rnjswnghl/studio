@@ -15,6 +15,8 @@ fs.mkdirSync('qa',{recursive:true});
  const drag=async(x,y,dx,dy)=>{await page.locator('#preview').scrollIntoViewIfNeeded();const b=await page.locator('#preview').boundingBox();await page.mouse.move(b.x+b.width*x,b.y+b.height*y);await page.mouse.down();await page.mouse.move(b.x+b.width*(x+dx),b.y+b.height*(y+dy),{steps:5});await page.mouse.up();};
  try{
   await page.goto(url);await ready();await saved();
+  assert.equal(await page.locator('#caption').inputValue(),'');assert.equal(await page.locator('#sampleGrid').count(),0);assert.equal(await page.locator('#photoSlot option').count(),1);assert.equal(await page.locator('#photoAfter').isDisabled(),true);check('optional empty text / removed samples / single-slot controls');
+  const alpha=await page.evaluate(async()=>{const {stickerAssets}=await import('./assets.js');return ['glass-spark','glass-heart','glass-moon','bubble-sheet'].map(key=>{const c=stickerAssets[key].image,p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let clear=0,visible=0;for(let i=3;i<p.length;i+=4){if(p[i]===0)clear++;else visible++;}return {key,clear,visible};});});assert.ok(alpha.every(a=>a.clear>1000&&a.visible>1000));check('four RGBA stickers have transparent backgrounds');
   assert.equal(await page.locator('[data-sticker]').count(),140);assert.equal(await page.locator('[data-template]').count(),6);check('140 stickers / 6 frames load');
   const photo=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=600;c.height=400;const x=c.getContext('2d');x.fillStyle='#cc573c';x.fillRect(0,0,300,400);x.fillStyle='#3c8caa';x.fillRect(300,0,300,400);x.fillStyle='white';x.fillRect(20,30,70,80);return c.toDataURL().split(',')[1]});
   const upload={name:'test-photo.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')};
@@ -24,7 +26,7 @@ fs.mkdirSync('qa',{recursive:true});
   await page.locator('[data-template="life-four"]').click();assert.equal((await saved()).templateId,'life-four');
   await page.locator('#undoEdit').click();assert.equal((await saved()).templateId,'camera-silver');
   await page.locator('#redoEdit').click();assert.equal((await saved()).ratio,'9:16');check('frame selection undo / redo');
-  await page.locator('#photoSlot').selectOption('1');await range('photoZoom',1.5);assert.equal((await saved()).images[1].zoom,1.5);
+  await page.locator('#photoSlot').selectOption('1');assert.equal(await page.locator('#photoZoom').isDisabled(),true);await page.locator('#replacePhoto').click();await page.locator('#slotImageInput').setInputFiles(upload);await saved();await range('photoZoom',1.5);assert.equal((await saved()).images[1].zoom,1.5);
   await range('photoRotate',30);assert.equal((await saved()).images[1].rotate,30);
   await page.locator('#photoAfter').click();assert.equal((await saved()).images[2].zoom,1.5);
   await page.locator('#removePhoto').click();assert.equal((await saved()).images[2],null);

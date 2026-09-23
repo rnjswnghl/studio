@@ -18,7 +18,7 @@ export const DEFAULT_TEMPLATES = [
 export const STICKERS = stickerAssets;
 
 const INITIAL_STATE = {
-  ratio: "1:1", caption: "오늘, 우리, 그리고 빛나는 순간", textColor: "#fffaf0",
+  ratio: "1:1", caption: "", textColor: "#fffaf0",
   fontSize: 42, textPosition: "bottom", templateId: "camera-silver", sticker: "spark", images: [],
 };
 const state = { ...INITIAL_STATE, images: [] };
@@ -97,7 +97,7 @@ function drawPlaceholder(c,x,y,w,h,index) {
   c.fillStyle = index%2 ? "#b9b2a6" : "#ccc4b7"; c.fillRect(x,y,w,h);
   c.strokeStyle="rgba(56,50,44,.25)"; c.lineWidth=Math.max(2,w*.006); c.beginPath(); c.moveTo(x,y+h); c.lineTo(x+w*.36,y+h*.58); c.lineTo(x+w*.56,y+h*.73); c.lineTo(x+w,y+h*.3); c.stroke();
 }
-function imageForSlot(index){return state.images[index]===null?null:(state.images[index] || state.images.find(Boolean) || null); }
+function imageForSlot(index){return state.images[index] || null; }
 function drawSlot(c,x,y,w,h,index) { const record=imageForSlot(index); if(record?.img) coverImage(c,record.img,x,y,w,h,record.position,record.zoom??1,record.rotate??0); else drawPlaceholder(c,x,y,w,h,index); }
 
 function slotRects(w,h,t=activeTemplate()){
@@ -159,7 +159,7 @@ async function restoreImageRecord(record){const img=await imageFromDataUrl(recor
 function dataUrlType(value){return /^data:(image\/(?:png|jpeg));base64,/i.exec(value)?.[1]?.toLowerCase()||"";}
 function normalisePosition(value){return{x:clamp(Number(value?.x),0,1),y:clamp(Number(value?.y),0,1)};}
 function clamp(value,min,max){return Number.isFinite(value)?Math.min(max,Math.max(min,value)):(min+max)/2;}
-function renderFileList(){syncPhotoControls();const old=$("#fileList");old.innerHTML="";state.images.forEach((record,i)=>{if(!record)return;const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${record.name}`;img.src=record.dataUrl;old.append(img);});}
+function renderFileList(){syncPhotoControls();const old=$("#fileList");old.innerHTML="";state.images.forEach((record,i)=>{if(!record)return;const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${record.name}`;img.src=record.dataUrl;const item=document.createElement("button");item.type="button";item.className="photo-thumb-button";const visible=i<(frameAssets[activeTemplate().frame]?.holes.length||1);item.disabled=!visible;item.title=visible?`${i+1}번 칸 선택`:`${i+1}번 사진 · 프레임 밖에 보관 중`;const label=document.createElement("small");label.textContent=`${i+1}번${visible?"":" · 보관"}`;item.append(img,label);item.onclick=()=>{$("#photoSlot").value=i;syncPhotoControls();};old.append(item);});}
 
 let pendingSlot=0,dragState=null;
 function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
@@ -240,12 +240,6 @@ async function applyTemplateSettings(t){
 }
 function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#f3f0eb";syncLayerControls();$("#caption").value=state.caption;$("#textColor").value=state.textColor;$("#fontSize").value=state.fontSize;document.querySelectorAll("#textPosition button").forEach(b=>b.classList.toggle("active",b.dataset.value===state.textPosition));}
 
-const samples=[
-  {name:"늦여름의 우리",meta:"4:5 · 은빛 디카",ratio:"4:5",templateId:"camera-silver",caption:"늦여름의 우리",sticker:"spark",textColor:"#fffaf0",fontSize:50,textPosition:"bottom"},
-  {name:"네 컷의 오후",meta:"9:16 · 빈티지 필름 네컷",ratio:"9:16",templateId:"life-four",caption:"우리의 작은 오후",sticker:"heart",textColor:"#642f2b",fontSize:44,textPosition:"bottom"},
-  {name:"필름 속 주말",meta:"1:1 · 필름",ratio:"1:1",templateId:"film-noir",caption:"SUN. 4:32 PM",sticker:"planet",textColor:"#f1dec2",fontSize:38,textPosition:"center"},
-];
-function renderSamples(){const grid=$("#sampleGrid");const files=["late-summer-4x5.png","four-cuts-9x16.png","film-weekend-1x1.png"];samples.forEach((sample,i)=>{const button=document.createElement("button");button.type="button";button.className="sample-card";button.innerHTML=`<img src="samples/${files[i]}" alt="${sample.name} 완성본" /><strong>${sample.name}</strong><span>${sample.meta}</span>`;const preview=document.createElement("canvas");preview.width=360;preview.height=360*RATIOS[sample.ratio][1]/RATIOS[sample.ratio][0];draw(preview,{...state,...sample,layers:[stickerLayer(sample.sticker)]});button.querySelector("img").src=preview.toDataURL();button.addEventListener("click",()=>{applyTemplateSettings(sample);window.scrollTo({top:$("#editor").offsetTop-80,behavior:"smooth"});});grid.append(button);});}
 
 
 let selectedLayer=null,freeDrag=null;
@@ -255,7 +249,7 @@ function snapshot(){return {state:{...state,layers:structuredClone(state.layers|
 function checkpoint(){undoStack.push(snapshot());if(undoStack.length>60)undoStack.shift();redoStack.length=0;$("#undoEdit").disabled=false;$("#redoEdit").disabled=true;}
 function travel(from,to){if(!from.length)return;const previous=from.at(-1);try{persistTemplates(previous.templates);}catch{$("#templateMessage").textContent="저장 공간이 부족해 실행 취소하지 못했어요. 작업을 백업해주세요.";return;}to.push(snapshot());from.pop();for(const key of Object.keys(state))delete state[key];Object.assign(state,previous.state);userTemplates=previous.templates;selectedLayer=previous.selectedLayer;selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;syncControls();renderTemplates();renderFileList();setRatio(state.ratio);refreshEdit();}
 function chosen(){return state.layers.find(l=>l.id===selectedLayer);}
-function refreshEdit(){syncLayerControls();renderStickers();draw();scheduleSave();}
+function refreshEdit(){syncPhotoControls();syncLayerControls();renderStickers();draw();scheduleSave();}
 function syncLayerControls(){
  const list=$("#layerList");if(!list)return;
  list.replaceChildren();for(const [id,label] of [["caption","문구"],["frame","사진 프레임"],...[...(state.layers||[])].reverse().map(l=>[l.id,STICKERS[l.key]?.label||l.key])]){const o=document.createElement("option");o.value=id;o.textContent=label;list.append(o);}list.value=selectedLayer||"";
@@ -300,17 +294,22 @@ function finishFreeDrag(){if(!freeDrag)return;freeDrag=null;canvas.classList.rem
 
 
 function syncPhotoControls(){
- const select=$("#photoSlot");if(!select)return;const i=Number(select.value),r=imageForSlot(i);
+ const select=$("#photoSlot");if(!select)return;const count=frameAssets[activeTemplate().frame]?.holes.length||1;
+ const i=Math.min(Number(select.value)||0,count-1),r=imageForSlot(i);
+ select.replaceChildren(...Array.from({length:count},(_,index)=>new Option(`${index+1}번 · ${imageForSlot(index)?"사진 있음":"빈 칸"}`,index)));select.value=i;
+ const hidden=state.images.slice(count).filter(Boolean).length;
+ $("#photoHelp").textContent=`현재 프레임은 ${count}칸입니다. ${count>1?(activeTemplate().frame==="film"?"왼쪽부터":"위에서부터")+" 1번이며, 교환하면 두 칸의 사진이 서로 바뀝니다.":"사진을 더 배치하려면 네컷 또는 필름 프레임을 선택하세요."}${hidden?` 현재 보이지 않는 사진 ${hidden}장은 보관 중입니다.`:""}`;
+ $("#replacePhoto").textContent=r?"사진 교체":"이 칸에 사진 추가";
  $("#photoZoom").value=r?.zoom??1;$("#photoRotate").value=r?.rotate??0;
  $("#photoZoom").disabled=$("#photoRotate").disabled=$("#removePhoto").disabled=!r;
- $("#photoBefore").disabled=i===0;$("#photoAfter").disabled=i===3;
+ $("#photoBefore").disabled=i===0;$("#photoAfter").disabled=i===count-1;
 }
 function bindPhotoControls(){
  $("#photoSlot").onchange=syncPhotoControls;
  for(const [id,key] of [["photoZoom","zoom"],["photoRotate","rotate"]]){$("#"+id).oninput=e=>{const i=Number($("#photoSlot").value),r=imageForSlot(i);if(r){checkpoint();state.images[i]={...r,position:{...r.position},[key]:Number(e.target.value)};draw();syncLayerControls();scheduleSave();}};}
  $("#replacePhoto").onclick=()=>{pendingSlot=Number($("#photoSlot").value);$("#slotImageInput").click();};
  $("#removePhoto").onclick=()=>{checkpoint();state.images[Number($("#photoSlot").value)]=null;renderFileList();refreshEdit();};
- for(const [id,d] of [["photoBefore",-1],["photoAfter",1]])$("#"+id).onclick=()=>{const i=Number($("#photoSlot").value),j=i+d;if(j<0||j>3)return;checkpoint();[state.images[i],state.images[j]]=[state.images[j]??null,state.images[i]??null];$("#photoSlot").value=j;renderFileList();refreshEdit();};
+ for(const [id,d] of [["photoBefore",-1],["photoAfter",1]])$("#"+id).onclick=()=>{const i=Number($("#photoSlot").value),j=i+d;if(j<0||j>=frameAssets[activeTemplate().frame].holes.length)return;checkpoint();[state.images[i],state.images[j]]=[state.images[j]??null,state.images[i]??null];$("#photoSlot").value=j;renderFileList();refreshEdit();};
  $("#backgroundColor").oninput=e=>{checkpoint();state.backgroundColor=e.target.value;refreshEdit();};
 }
 
@@ -319,7 +318,7 @@ async function prepareLayerAssets(layers=[]){const assets={};for(const l of laye
 async function restoreLayerAssets(layers=[]){Object.assign(STICKERS,await prepareLayerAssets(layers));}
 async function start(){
  $("#download").disabled=true;$("#statusText").textContent="원본 스티커와 프레임 준비 중…";
- try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);renderSamples();$("#download").disabled=false;}
+ try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);$("#download").disabled=false;}
  catch(error){$("#statusText").textContent=error.message;}
 }
 start();
