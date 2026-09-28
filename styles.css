@@ -154,6 +154,19 @@ dialog { width:min(520px,calc(100% - 2rem)); border:1px solid var(--line); backg
 .photo-thumb-button:disabled { opacity: .5; cursor: default; }
 
 /* Monochrome studio */
+[hidden] { display:none!important; }
+.add-text-button { width:100%; padding:.8rem 1rem; border:1px solid #171717; border-radius:4px; color:#fff; background:#171717; font-size:.85rem; cursor:pointer; text-align:left; }
+.add-text-button:hover { background:#333; }
+.text-editor { margin-top:1rem; padding-top:.8rem; border-top:1px solid #dedede; }
+.text-editor-heading { display:flex; justify-content:space-between; align-items:center; font-size:.75rem; }
+.text-editor select { display:block; width:100%; min-width:0; padding:.65rem; border:1px solid #dedede; border-radius:4px; background:#fff; color:#171717; font-size:.8rem; }
+.text-editor textarea { margin-top:.75rem; font-size:1.05rem; line-height:1.5; }
+.text-editor .field-row { grid-template-columns:auto minmax(0,1fr); }
+.text-editor .field-row label { white-space:nowrap; }
+.text-editor .field-row input[type="range"] { min-width:0; }
+.download-button span { color:inherit; font-size:inherit; margin:0; }
+.font-label { display:block; margin:.7rem 0 .35rem; font-size:.75rem; }
+#fontStatus:empty { display:none; }
 :root { --ink:#171717; --muted:#666; --paper:#fafafa; --paper-2:#f0f0f0; --cream:#fff; --accent:#171717; --sage:#666; --line:#dedede; --shadow:rgba(0,0,0,.06); }
 body { background:var(--paper); -webkit-font-smoothing:antialiased; }
 .topbar { height:72px; background:rgba(255,255,255,.96); border-color:#e8e8e8; }

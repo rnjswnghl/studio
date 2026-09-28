@@ -1,3 +1,4 @@
+import { TEXT_FONTS, textLayer, migrateTexts, validTexts } from "./text.js";
 import { stickerLayer, layerBounds, hitLayer, validLayers } from "./editing.js";
 import { stickerAssets, frameAssets, prepareAssets, framePlacement } from "./assets.js";
 export const RATIOS = {
@@ -37,6 +38,7 @@ function loadUserTemplates() {
 function persistTemplates(next=userTemplates) { localStorage.setItem("cutnote-templates", JSON.stringify(next)); }
 function validSettings(s) {
   if (!s || typeof s !== "object" || Array.isArray(s)) return false;
+  if (s.texts !== undefined && (!validTexts(s.texts) || s.texts.some(t=>Array.isArray(s.layers)&&s.layers.some(l=>l.id===t.id)))) return false;
   if (s.caption !== undefined && (typeof s.caption !== "string" || s.caption.length > 120)) return false;
   for (const key of ["textColor", "backgroundColor"]) if(s[key] !== undefined && !/^#[0-9a-f]{6}$/i.test(s[key])) return false;
   if (s.textPosition !== undefined && !["top","center","bottom"].includes(s.textPosition)) return false;
@@ -115,25 +117,25 @@ function drawSticker(c,w,h,key){
  for(const layer of state.layers||[]){const asset=STICKERS[layer.key];if(!asset)continue;const r=layerBounds(layer,asset.image,w,h);c.save();c.globalAlpha=layer.opacity;c.translate(r.x,r.y);c.rotate(layer.rotation*Math.PI/180);c.scale(layer.flip?-1:1,1);c.drawImage(asset.image,-r.w/2,-r.h/2,r.w,r.h);c.restore();}
 }
 
-function captionLayout(c,w,h) {
- const size=state.fontSize*w/1080;c.font=`700 ${size}px Gaegu`;
+function captionLayout(c,w,h,text=selectedText()||state) {
+ const size=text.fontSize*w/1080;c.font=`${text.fontFamily==="Gaegu"?700:400} ${size}px "${text.fontFamily||"Gaegu"}", sans-serif`;
  const lines=[];let line="";
- for(const char of state.caption.trim()){
+ for(const char of text.caption.trim()){
   if(char==="\n"){lines.push(line);line="";continue;}
   if(c.measureText(line+char).width>w*.76&&line){lines.push(line);line=char;}else line+=char;
  }
  if(line)lines.push(line);const shown=lines.slice(0,3),lh=size*1.15;
- return {lines:shown,size,lh,x:w*(state.captionX??.5),y:h*(state.captionY??({top:.1,center:.5,bottom:.86})[state.textPosition]),w:Math.max(0,...shown.map(t=>c.measureText(t).width))+12,h:shown.length*lh+12,rotation:state.captionRotation??0};
+ return {lines:shown,size,lh,x:w*(text.captionX??.5),y:h*(text.captionY??({top:.1,center:.5,bottom:.86})[text.textPosition]),w:Math.max(0,...shown.map(t=>c.measureText(t).width))+12,h:shown.length*lh+12,rotation:text.captionRotation??0};
 }
-function drawCaption(c,w,h) {
- if(!state.caption.trim())return;const r=captionLayout(c,w,h);c.save();c.textAlign="center";c.textBaseline="middle";c.translate(r.x,r.y);c.rotate(r.rotation*Math.PI/180);
- c.lineWidth=Math.max(5,r.size*.13);c.strokeStyle="rgba(28,24,21,.66)";c.fillStyle=state.textColor;
- r.lines.forEach((line,i)=>{const y=-(r.lines.length-1)*r.lh/2+i*r.lh;c.strokeText(line,0,y);c.fillText(line,0,y);});c.restore();
+function drawCaption(c,w,h,text) {
+ if(!text.caption.trim())return;const r=captionLayout(c,w,h,text);c.save();c.textAlign="center";c.textBaseline="middle";c.translate(r.x,r.y);c.rotate(r.rotation*Math.PI/180);
+ c.lineWidth=Math.max(5,r.size*.13);c.strokeStyle="rgba(28,24,21,.66)";c.fillStyle=text.textColor;
+ r.lines.forEach((line,i)=>{const y=-(r.lines.length-1)*r.lh/2+i*r.lh;if(text.outline)c.strokeText(line,0,y);c.fillText(line,0,y);});c.restore();
 }
 function draw(target=canvas, targetState=state) {
   const c=target.getContext("2d"), w=target.width,h=target.height; c.clearRect(0,0,w,h);
-  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); drawCaption(c,w,h);if(target===canvas)drawSelection(c,w,h); Object.assign(state,original);
-  $("#emptyCanvas").hidden = state.images.some(Boolean);
+  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); for(const text of state.texts||[])drawCaption(c,w,h,text);if(target===canvas)drawSelection(c,w,h); Object.assign(state,original);
+  $("#emptyCanvas").hidden = state.images.some(Boolean) || state.texts?.some(t=>t.caption.trim());
 }
 
 let saveTimer;
@@ -178,10 +180,7 @@ function bindEvents(){
 
   $("#imageInput").addEventListener("change",(e)=>handleImages(e.target.files)); const dz=$("#dropZone");
   ["dragenter","dragover"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.add("drag")})); ["dragleave","drop"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.remove("drag")})); dz.addEventListener("drop",(e)=>handleImages(e.dataTransfer.files));
-  $("#caption").addEventListener("input",(e)=>{checkpoint();state.caption=e.target.value;refreshEdit()});
-  $("#textColor").addEventListener("input",(e)=>{checkpoint();state.textColor=e.target.value;refreshEdit()});
-  $("#fontSize").addEventListener("input",(e)=>{checkpoint();state.fontSize=Number(e.target.value);refreshEdit()});
-  $("#textPosition").addEventListener("click",(e)=>{const b=e.target.closest("button");if(!b)return;checkpoint();state.textPosition=b.dataset.value;state.captionX=.5;state.captionY=({top:.1,center:.5,bottom:.86})[b.dataset.value];document.querySelectorAll("#textPosition button").forEach(x=>x.classList.toggle("active",x===b));refreshEdit()});
+  bindTextEditing();
   $("#ratios").addEventListener("click",(e)=>{const b=e.target.closest("button");if(b){checkpoint();setRatio(b.dataset.ratio);syncLayerControls();}});
   $("#templateGrid").addEventListener("click",(e)=>{const b=e.target.closest("[data-template]");if(!b)return;const t=allTemplates().find(t=>t.id===b.dataset.template);applyTemplateSettings(t)});
   $("#stickerGrid").addEventListener("click",(e)=>{const b=e.target.closest("[data-sticker]");if(!b)return;checkpoint();const layer=stickerLayer(b.dataset.sticker,{x:.35+Math.random()*.3,y:.25+Math.random()*.3});state.layers.push(layer);selectedLayer=layer.id;state.sticker=layer.key;refreshEdit()});
@@ -193,7 +192,7 @@ function bindEvents(){
   $("#resetApp").addEventListener("click",()=>{if(confirm("저장한 설정과 사용자 템플릿을 모두 지울까요?")){localStorage.removeItem("cutnote-state");localStorage.removeItem("cutnote-templates");location.reload();}});
   bindCanvasEditing();
 }
-function downloadPng(){const output=document.createElement("canvas");output.width=canvas.width;output.height=canvas.height;draw(output);const a=document.createElement("a");a.download=`cutnote-${state.ratio.replace(":","x")}-${Date.now()}.png`;a.href=output.toDataURL("image/png");a.click();}
+async function downloadPng(){await ensureTextFonts();const output=document.createElement("canvas");output.width=canvas.width;output.height=canvas.height;draw(output);const a=document.createElement("a");a.download=`cutnote-${state.ratio.replace(":","x")}-${Date.now()}.png`;a.href=output.toDataURL("image/png");a.click();}
 function serialiseImage(record){return record?{name:record.name,type:record.type,dataUrl:record.dataUrl,position:normalisePosition(record.position),zoom:record.zoom??1,rotate:record.rotate??0}:null;}
 function exportProject(){const payload={version:2,exportedAt:new Date().toISOString(),state:{...state,images:state.images.map(serialiseImage)},templates:userTemplates};const a=document.createElement("a");a.download="cutnote-project.json";a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function importProject(e){
@@ -204,13 +203,13 @@ async function importProject(e){
   const assets=await prepareLayerAssets([...(data.state.layers||[]),...data.templates.flatMap(t=>t.layers||[])]);
   persistTemplates(data.templates);checkpoint();Object.assign(STICKERS,assets);userTemplates=data.templates;
   for(const key of Object.keys(state))delete state[key];Object.assign(state,INITIAL_STATE,data.state,{images:restoredImages});
-  migrateLayers();selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;
+  migrateLayers();await ensureTextFonts();selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;
   renderTemplates();renderStickers();renderFileList();syncControls();setRatio(state.ratio);
   $("#importDialog").close();$("#jsonError").textContent="";scheduleSave();
  }catch(err){$("#jsonError").textContent=err instanceof SyntaxError?"JSON 문법이 손상되었습니다. 기존 작업은 유지됩니다.":`${err.message} 기존 작업은 유지됩니다.`;}
  finally{e.target.value="";}
 }
-function templateFromState(id,name){const t=activeTemplate();return{id,name,subtitle:"my preset",frame:t.frame,ratio:state.ratio,color:t.color,accent:t.accent||"#c95745",caption:state.caption,textColor:state.textColor,fontSize:state.fontSize,textPosition:state.textPosition,sticker:state.sticker,stickerSize:state.stickerSize,stickerX:state.stickerX,stickerY:state.stickerY,layers:structuredClone(state.layers),captionX:state.captionX,captionY:state.captionY,captionRotation:state.captionRotation,frameX:state.frameX,frameY:state.frameY,frameSize:state.frameSize,frameRotation:state.frameRotation,backgroundColor:state.backgroundColor};}
+function templateFromState(id,name){const t=activeTemplate();return{id,name,subtitle:"my preset",frame:t.frame,ratio:state.ratio,color:t.color,accent:t.accent||"#c95745",caption:state.caption,textColor:state.textColor,fontSize:state.fontSize,textPosition:state.textPosition,sticker:state.sticker,stickerSize:state.stickerSize,stickerX:state.stickerX,stickerY:state.stickerY,layers:structuredClone(state.layers),texts:structuredClone(state.texts),captionX:state.captionX,captionY:state.captionY,captionRotation:state.captionRotation,frameX:state.frameX,frameY:state.frameY,frameSize:state.frameSize,frameRotation:state.frameRotation,backgroundColor:state.backgroundColor};}
 function saveTemplate(){
  const name=$("#templateName").value.trim();if(!name){$("#templateMessage").textContent="이름을 먼저 적어주세요.";return;}
  const t=templateFromState(uid(),name),next=[...userTemplates,t];
@@ -231,47 +230,48 @@ function deleteTemplate(){
 async function applyTemplateSettings(t){
  clearTimeout(saveTimer);$("#statusText").textContent="템플릿 불러오는 중…";
  try{await restoreLayerAssets(t.layers);}catch{$("#templateMessage").textContent="템플릿의 스티커를 읽지 못했어요. 기존 작업은 유지됩니다.";scheduleSave();return;}
- checkpoint();for(const key of ["captionX","captionY","captionRotation","frameX","frameY","frameSize","frameRotation","backgroundColor"])state[key]=t[key];
+ checkpoint();if(t.texts!==undefined||"caption" in t)state.texts=migrateTexts(t);
+ for(const key of ["captionX","captionY","captionRotation","frameX","frameY","frameSize","frameRotation","backgroundColor"])state[key]=t[key];
  if(t.layers)state.layers=structuredClone(t.layers);else if("sticker" in t)state.layers=t.sticker?[stickerLayer(t.sticker)]:[];
  selectedLayer=null;selectedUserTemplateId=userTemplates.some(x=>x.id===t.id)?t.id:null;
  state.templateId=t.id||t.templateId;state.ratio=t.ratio;
  for(const key of ["caption","sticker","textColor","fontSize","textPosition"])if(key in t)state[key]=t[key];
- syncControls();setRatio(state.ratio);renderTemplates();renderStickers();renderFileList();draw();scheduleSave();
+ await ensureTextFonts();syncControls();setRatio(state.ratio);renderTemplates();renderStickers();renderFileList();draw();scheduleSave();
 }
-function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#f3f0eb";syncLayerControls();$("#caption").value=state.caption;$("#textColor").value=state.textColor;$("#fontSize").value=state.fontSize;document.querySelectorAll("#textPosition button").forEach(b=>b.classList.toggle("active",b.dataset.value===state.textPosition));}
+function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#f3f0eb";syncLayerControls();syncTextControls();}
 
 
 
 let selectedLayer=null,freeDrag=null;
 const undoStack=[],redoStack=[];
-function migrateLayers(){if(!Array.isArray(state.layers))state.layers=state.sticker&&STICKERS[state.sticker]?[stickerLayer(state.sticker,{x:state.stickerX??.82,y:state.stickerY??.17,size:state.stickerSize??.19})]:[];selectedLayer=state.layers.at(-1)?.id??null;}
-function snapshot(){return {state:{...state,layers:structuredClone(state.layers||[]),images:state.images.map(r=>r?{...r,position:{...r.position}}:null)},templates:structuredClone(userTemplates),selectedLayer};}
+function migrateLayers(){state.texts=migrateTexts(state);if(!Array.isArray(state.layers))state.layers=state.sticker&&STICKERS[state.sticker]?[stickerLayer(state.sticker,{x:state.stickerX??.82,y:state.stickerY??.17,size:state.stickerSize??.19})]:[];selectedLayer=state.layers.at(-1)?.id??null;}
+function snapshot(){return {state:{...state,layers:structuredClone(state.layers||[]),texts:structuredClone(state.texts||[]),images:state.images.map(r=>r?{...r,position:{...r.position}}:null)},templates:structuredClone(userTemplates),selectedLayer};}
 function checkpoint(){undoStack.push(snapshot());if(undoStack.length>60)undoStack.shift();redoStack.length=0;$("#undoEdit").disabled=false;$("#redoEdit").disabled=true;}
 function travel(from,to){if(!from.length)return;const previous=from.at(-1);try{persistTemplates(previous.templates);}catch{$("#templateMessage").textContent="저장 공간이 부족해 실행 취소하지 못했어요. 작업을 백업해주세요.";return;}to.push(snapshot());from.pop();for(const key of Object.keys(state))delete state[key];Object.assign(state,previous.state);userTemplates=previous.templates;selectedLayer=previous.selectedLayer;selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;syncControls();renderTemplates();renderFileList();setRatio(state.ratio);refreshEdit();}
 function chosen(){return state.layers.find(l=>l.id===selectedLayer);}
-function refreshEdit(){syncPhotoControls();syncLayerControls();renderStickers();draw();scheduleSave();}
+function refreshEdit(){syncTextControls();ensureTextFonts();syncPhotoControls();syncLayerControls();renderStickers();draw();scheduleSave();}
 function syncLayerControls(){
  const list=$("#layerList");if(!list)return;
- list.replaceChildren();for(const [id,label] of [["caption","문구"],["frame","사진 프레임"],...[...(state.layers||[])].reverse().map(l=>[l.id,STICKERS[l.key]?.label||l.key])]){const o=document.createElement("option");o.value=id;o.textContent=label;list.append(o);}list.value=selectedLayer||"";
- const l=chosen(),caption=selectedLayer==="caption",frame=selectedLayer==="frame";
+ list.replaceChildren();for(const [id,label] of [["frame","사진 프레임"],...[...(state.texts||[])].reverse().map((t)=>[t.id,`텍스트 · ${t.caption||"빈 텍스트"}`]),...[...(state.layers||[])].reverse().map(l=>[l.id,STICKERS[l.key]?.label||l.key])]){const o=document.createElement("option");o.value=id;o.textContent=label;list.append(o);}list.value=selectedLayer||"";
+ const l=chosen(),text=selectedText(),caption=!!text,frame=selectedLayer==="frame";
  const sizeInput=$("#stickerSize");sizeInput.min=caption?18/10.8:1;sizeInput.max=caption?20:300;sizeInput.step=caption?.1:1;
- const values={stickerSize:l?.size??(frame?(state.frameSize??1):state.fontSize/1080),stickerX:l?.x??(caption?(state.captionX??.5):(state.frameX??.5)),stickerY:l?.y??(caption?(state.captionY??({top:.1,center:.5,bottom:.86})[state.textPosition]):(state.frameY??.465)),layerRotation:l?.rotation??(frame?(state.frameRotation??0):(state.captionRotation??0)),layerOpacity:l?.opacity??1};
+ const values={stickerSize:l?.size??(frame?(state.frameSize??1):(text?.fontSize??42)/1080),stickerX:l?.x??(caption?(text?.captionX??.5):(state.frameX??.5)),stickerY:l?.y??(caption?(text?.captionY??({top:.1,center:.5,bottom:.86})[state.textPosition]):(state.frameY??.465)),layerRotation:l?.rotation??(frame?(state.frameRotation??0):(text?.captionRotation??0)),layerOpacity:l?.opacity??1};
  for(const [key,value] of Object.entries(values)){const input=$("#"+key);input.value=key==="layerRotation"?value:value*100;input.disabled=!(l||caption||frame)||(!l&&key==="layerOpacity");}
  for(const id of ["duplicateLayer","flipLayer","layerForward","layerBackward","removeSticker"])$("#"+id).disabled=!l;
  $("#undoEdit").disabled=!undoStack.length;$("#redoEdit").disabled=!redoStack.length;
 }
-function deleteSelected(){const l=chosen();if(!l)return;checkpoint();state.layers=state.layers.filter(x=>x.id!==l.id);selectedLayer=null;refreshEdit();}
+function deleteSelected(){if(selectedText()){deleteText();return;}const l=chosen();if(!l)return;checkpoint();state.layers=state.layers.filter(x=>x.id!==l.id);selectedLayer=null;refreshEdit();}
 function bindFreeEditing(){
  bindPhotoControls();
  $("#customSticker").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(!["image/png","image/jpeg"].includes(file.type))throw new Error("PNG 또는 JPEG 파일만 사용할 수 있어요.");const r=await loadImageFile(file),key="custom-"+crypto.randomUUID();checkpoint();STICKERS[key]={label:file.name,image:r.img,url:r.dataUrl};const l=stickerLayer(key,{dataUrl:r.dataUrl,label:file.name,x:.5,y:.5});state.layers.push(l);selectedLayer=l.id;refreshEdit();}catch(err){$("#fileError").textContent=err.message;}e.target.value="";};
  canvas.tabIndex=0;
- $("#layerList").addEventListener("change",e=>{selectedLayer=e.target.value;syncLayerControls();draw();});
- for(const id of ["stickerSize","stickerX","stickerY","layerRotation","layerOpacity"]){const input=$("#"+id);input.addEventListener("input",e=>{checkpoint();const key={stickerSize:"size",stickerX:"x",stickerY:"y",layerRotation:"rotation",layerOpacity:"opacity"}[id],v=Number(e.target.value)/(key==="rotation"?1:100),l=chosen();if(l)l[key]=v;else if(selectedLayer==="caption"){if(key==="size"){state.fontSize=clamp(v*1080,18,216);$("#fontSize").value=state.fontSize;}else state[{x:"captionX",y:"captionY",rotation:"captionRotation"}[key]]=v;}else if(selectedLayer==="frame")state[{x:"frameX",y:"frameY",size:"frameSize",rotation:"frameRotation"}[key]]=v;draw();scheduleSave();});}
+ $("#layerList").addEventListener("change",e=>{selectedLayer=e.target.value;if(selectedText()){textEditorOpen=true;activeTextId=selectedLayer;}syncTextControls();syncLayerControls();draw();});
+ for(const id of ["stickerSize","stickerX","stickerY","layerRotation","layerOpacity"]){const input=$("#"+id);input.addEventListener("input",e=>{checkpoint();const key={stickerSize:"size",stickerX:"x",stickerY:"y",layerRotation:"rotation",layerOpacity:"opacity"}[id],v=Number(e.target.value)/(key==="rotation"?1:100),l=chosen();if(l)l[key]=v;else if(selectedText()){const text=selectedText();if(key==="size")text.fontSize=clamp(v*1080,18,216);else text[{x:"captionX",y:"captionY",rotation:"captionRotation"}[key]]=v;syncTextControls();}else if(selectedLayer==="frame")state[{x:"frameX",y:"frameY",size:"frameSize",rotation:"frameRotation"}[key]]=v;draw();scheduleSave();});}
  $("#duplicateLayer").onclick=()=>{const l=chosen();if(!l)return;checkpoint();const copy=stickerLayer(l.key,{...l,id:crypto.randomUUID(),x:l.x+.03,y:l.y+.03});state.layers.push(copy);selectedLayer=copy.id;refreshEdit();};
  $("#flipLayer").onclick=()=>{const l=chosen();if(l){checkpoint();l.flip=!l.flip;refreshEdit();}};
  for(const [id,direction] of [["layerForward",1],["layerBackward",-1]])$("#"+id).onclick=()=>{const i=state.layers.findIndex(l=>l.id===selectedLayer),j=i+direction;if(i<0||j<0||j>=state.layers.length)return;checkpoint();[state.layers[i],state.layers[j]]=[state.layers[j],state.layers[i]];refreshEdit();};
  $("#undoEdit").onclick=()=>travel(undoStack,redoStack);$("#redoEdit").onclick=()=>travel(redoStack,undoStack);
- canvas.addEventListener("keydown",e=>{if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();deleteSelected();}const l=chosen();if((l||selectedLayer==="caption"||selectedLayer==="frame")&&e.key.startsWith("Arrow")){e.preventDefault();checkpoint();const d=e.shiftKey?.02:.002,dx=e.key==="ArrowLeft"?-d:e.key==="ArrowRight"?d:0,dy=e.key==="ArrowUp"?-d:e.key==="ArrowDown"?d:0;if(l){l.x+=dx;l.y+=dy;}else{const prefix=selectedLayer;state[prefix+"X"]=(state[prefix+"X"]??.5)+dx;state[prefix+"Y"]=(state[prefix+"Y"]??(prefix==="frame"?.465:({top:.1,center:.5,bottom:.86})[state.textPosition]))+dy;}refreshEdit();}});
+ canvas.addEventListener("keydown",e=>{if(e.key==="Delete"||e.key==="Backspace"){e.preventDefault();deleteSelected();}const l=chosen();if((l||selectedText()||selectedLayer==="frame")&&e.key.startsWith("Arrow")){e.preventDefault();checkpoint();const d=e.shiftKey?.02:.002,dx=e.key==="ArrowLeft"?-d:e.key==="ArrowRight"?d:0,dy=e.key==="ArrowUp"?-d:e.key==="ArrowDown"?d:0;if(l){l.x+=dx;l.y+=dy;}else if(selectedText()){selectedText().captionX+=dx;selectedText().captionY+=dy;}else{const prefix=selectedLayer;state[prefix+"X"]=(state[prefix+"X"]??.5)+dx;state[prefix+"Y"]=(state[prefix+"Y"]??(prefix==="frame"?.465:({top:.1,center:.5,bottom:.86})[state.textPosition]))+dy;}refreshEdit();}});
  document.addEventListener("keydown",e=>{if(e.target.matches("input,textarea,select"))return;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();e.shiftKey?travel(redoStack,undoStack):travel(undoStack,redoStack);}});
 }
 function freePointerDown(event){
@@ -280,16 +280,17 @@ function freePointerDown(event){
 
  const l=[...state.layers].reverse().find(l=>hitLayer(p,l,STICKERS[l.key].image,w,h));
  let kind=l?.id;
- const cy=state.captionY??({top:.1,center:.5,bottom:.86})[state.textPosition];
- // Caption is drawn above stickers and has first priority unless the frame tool is selected.
- const cr=captionLayout(ctx,w,h),ca=-cr.rotation*Math.PI/180,cdx=p.x-cr.x,cdy=p.y-cr.y;
- if(state.caption.trim()&&Math.abs(cdx*Math.cos(ca)-cdy*Math.sin(ca))<=cr.w/2&&Math.abs(cdx*Math.sin(ca)+cdy*Math.cos(ca))<=cr.h/2)kind="caption";
+ // Text is above stickers; select the topmost text at the pointer.
+ for(const text of [...state.texts].reverse()){
+  const cr=captionLayout(ctx,w,h,text),ca=-cr.rotation*Math.PI/180,cdx=p.x-cr.x,cdy=p.y-cr.y;
+  if(text.caption.trim()&&Math.abs(cdx*Math.cos(ca)-cdy*Math.sin(ca))<=cr.w/2&&Math.abs(cdx*Math.sin(ca)+cdy*Math.cos(ca))<=cr.h/2){kind=text.id;break;}
+ }
  if(selectedLayer==="frame"&&!kind)kind="frame";
  if(!kind){selectedLayer=null;syncLayerControls();draw();return false;}
- selectedLayer=kind;checkpoint();const item=chosen();const origin=item?{x:item.x,y:item.y}:kind==="caption"?{x:state.captionX??.5,y:cy}:{x:state.frameX??.5,y:state.frameY??.465};
+ selectedLayer=kind;if(selectedText()){activeTextId=kind;textEditorOpen=true;syncTextControls();}checkpoint();const item=chosen();const origin=item?{x:item.x,y:item.y}:selectedText()?{x:selectedText().captionX,y:selectedText().captionY}:{x:state.frameX??.5,y:state.frameY??.465};
  freeDrag={start:p,origin,kind};canvas.focus();canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");syncLayerControls();return true;
 }
-function freePointerMove(event){if(!freeDrag)return false;const p=canvasPoint(event);if(freeDrag.action){const l=chosen(),dx=p.x-freeDrag.center.x,dy=p.y-freeDrag.center.y;if(freeDrag.action==="rotate")l.rotation=freeDrag.rotation+(Math.atan2(dy,dx)-freeDrag.angle)*180/Math.PI;else l.size=clamp(freeDrag.size*Math.hypot(dx,dy)/Math.max(1,freeDrag.distance),.01,3);draw();syncLayerControls();return true;}const x=freeDrag.origin.x+(p.x-freeDrag.start.x)/canvas.width,y=freeDrag.origin.y+(p.y-freeDrag.start.y)/canvas.height;const l=chosen();if(l){l.x=x;l.y=y;}else if(freeDrag.kind==="caption"){state.captionX=x;state.captionY=y;}else{state.frameX=x;state.frameY=y;}draw();syncLayerControls();return true;}
+function freePointerMove(event){if(!freeDrag)return false;const p=canvasPoint(event);if(freeDrag.action){const l=chosen(),dx=p.x-freeDrag.center.x,dy=p.y-freeDrag.center.y;if(freeDrag.action==="rotate")l.rotation=freeDrag.rotation+(Math.atan2(dy,dx)-freeDrag.angle)*180/Math.PI;else l.size=clamp(freeDrag.size*Math.hypot(dx,dy)/Math.max(1,freeDrag.distance),.01,3);draw();syncLayerControls();return true;}const x=freeDrag.origin.x+(p.x-freeDrag.start.x)/canvas.width,y=freeDrag.origin.y+(p.y-freeDrag.start.y)/canvas.height;const l=chosen();if(l){l.x=x;l.y=y;}else if(selectedText()){selectedText().captionX=x;selectedText().captionY=y;syncTextControls();}else{state.frameX=x;state.frameY=y;}draw();syncLayerControls();return true;}
 function finishFreeDrag(){if(!freeDrag)return;freeDrag=null;canvas.classList.remove("dragging");scheduleSave();}
 
 
@@ -313,12 +314,64 @@ function bindPhotoControls(){
  $("#backgroundColor").oninput=e=>{checkpoint();state.backgroundColor=e.target.value;refreshEdit();};
 }
 
-function drawSelection(c,w,h){const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
+function drawSelection(c,w,h){const text=selectedText();if(text&&text.caption.trim()){const r=captionLayout(c,w,h,text);c.save();c.translate(r.x,r.y);c.rotate(r.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=2;c.setLineDash([8,6]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.restore();return;}const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
 async function prepareLayerAssets(layers=[]){const assets={};for(const l of layers){if(l.dataUrl){const image=await imageFromDataUrl(l.dataUrl);assets[l.key]={label:l.label||"내 스티커",image,url:l.dataUrl};}}return assets;}
 async function restoreLayerAssets(layers=[]){Object.assign(STICKERS,await prepareLayerAssets(layers));}
+
+let activeTextId=null,textEditorOpen=false;
+function selectedText(){return state.texts?.find(t=>t.id===selectedLayer);}
+function editingText(){return state.texts?.find(t=>t.id===activeTextId);}
+const fontPromises=new Map();let fontRevision=0;
+async function ensureTextFonts(){
+ const revision=++fontRevision;
+ const texts=state.texts||[];
+ try{
+  await Promise.all(texts.filter(t=>t.caption.trim()).map(t=>{
+   const spec=`${t.fontFamily==='Gaegu'?700:400} 64px "${t.fontFamily}"`, key=spec+t.caption;
+   if(!fontPromises.has(key))fontPromises.set(key,document.fonts.load(spec,t.caption).then(f=>{if(!f.length)throw Error('font');}).catch(e=>{fontPromises.delete(key);throw e;}));
+   return fontPromises.get(key);
+  }));
+  if(revision===fontRevision)$("#fontStatus").textContent='';
+ }catch{if(revision===fontRevision)$("#fontStatus").textContent='글씨체를 불러오지 못해 기본 글씨체로 표시합니다. 연결 후 다시 선택해주세요.';}
+ if(revision===fontRevision)draw();
+}
+function syncTextControls(){
+ const texts=state.texts||[];
+ if(selectedText())activeTextId=selectedLayer;
+ if(!texts.some(t=>t.id===activeTextId))activeTextId=texts.at(-1)?.id??null;
+ const text=editingText();
+ $("#textEditor").hidden=!textEditorOpen||!text;
+ $("#addText").setAttribute('aria-expanded',String(textEditorOpen&&!!text));
+ $("#textList").replaceChildren(...texts.map((t,i)=>new Option(`${i+1}. ${t.caption||'빈 텍스트'}`,t.id)));
+ $("#textList").value=activeTextId||'';
+ if(!text)return;
+ for(const [id,key] of [['caption','caption'],['textColor','textColor'],['fontSize','fontSize'],['fontFamily','fontFamily'],['textRotation','captionRotation']])$("#"+id).value=text[key];
+ $("#textX").value=text.captionX*100;$("#textY").value=text.captionY*100;
+ $("#caption").style.fontFamily=`"${text.fontFamily}", sans-serif`;
+}
+function addText(copy){
+ if(state.texts.length>=100){$("#fontStatus").textContent='텍스트는 최대 100개까지 추가할 수 있어요.';return;}
+ checkpoint();const t=textLayer(copy?{...copy,id:crypto.randomUUID(),captionX:copy.captionX+.03,captionY:copy.captionY+.03}:{captionX:.5+(state.texts.length%4)*.03,captionY:.5+(state.texts.length%4)*.05});
+ state.texts.push(t);activeTextId=selectedLayer=t.id;textEditorOpen=true;refreshEdit();$("#caption").focus();$("#caption").select();
+}
+function deleteText(){
+ const t=selectedText()||editingText();if(!t)return;checkpoint();state.texts=state.texts.filter(x=>x.id!==t.id);activeTextId=selectedLayer=state.texts.at(-1)?.id??null;refreshEdit();
+}
+function bindTextEditing(){
+ $("#fontFamily").replaceChildren(...TEXT_FONTS.map(([value,label])=>new Option(label,value)));
+ $("#addText").onclick=()=>addText();
+ $("#collapseText").onclick=()=>{textEditorOpen=false;syncTextControls();$("#addText").focus();};
+ $("#textList").onchange=e=>{activeTextId=selectedLayer=e.target.value;refreshEdit();};
+ $("#duplicateText").onclick=()=>addText(editingText());
+ $("#deleteText").onclick=()=>{selectedLayer=activeTextId;deleteText();};
+ for(const [id,key,scale] of [['caption','caption',0],['textColor','textColor',0],['fontFamily','fontFamily',0],['fontSize','fontSize',1],['textX','captionX',100],['textY','captionY',100],['textRotation','captionRotation',1]]){
+  $("#"+id).addEventListener('input',e=>{const t=editingText();if(!t)return;checkpoint();selectedLayer=t.id;t[key]=scale?Number(e.target.value)/scale:e.target.value;refreshEdit();});
+ }
+}
+
 async function start(){
  $("#download").disabled=true;$("#statusText").textContent="원본 스티커와 프레임 준비 중…";
- try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);$("#download").disabled=false;}
+ try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();await ensureTextFonts();bindEvents();bindFreeEditing();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);$("#download").disabled=false;}
  catch(error){$("#statusText").textContent=error.message;}
 }
 start();

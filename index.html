@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffffff'/%3E%3Crect x='10' y='16' width='44' height='34' rx='5' fill='none' stroke='%23171717' stroke-width='4'/%3E%3Ccircle cx='32' cy='33' r='10' fill='none' stroke='%23171717' stroke-width='4'/%3E%3Cpath d='M18 16l4-6h11l4 6' fill='none' stroke='%23171717' stroke-width='4'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Nanum+Brush+Script&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -53,16 +53,23 @@
 
           <div class="tool-block">
             <p class="edit-hint" id="photoHelp" aria-live="polite"></p>
-            <div class="tool-label"><span>02</span><strong>텍스트 추가 <small>· 선택 사항</small></strong></div>
-            <textarea id="caption" maxlength="120" rows="3" aria-label="텍스트 추가 (선택 사항)" placeholder="원하는 문구가 있을 때만 적어주세요"></textarea>
+            <div class="tool-label"><span>02</span><strong>텍스트</strong></div>
+            <button id="addText" class="add-text-button" type="button" aria-expanded="false" aria-controls="textEditor">＋ 텍스트 추가</button>
+            <div id="textEditor" class="text-editor" hidden>
+            <div class="text-editor-heading"><label for="textList">편집할 텍스트</label><button id="collapseText" class="text-button" type="button">접기</button></div>
+            <select id="textList" aria-label="편집할 텍스트"></select>
+            <textarea id="caption" maxlength="120" rows="3" aria-label="텍스트 내용" placeholder="문구를 입력하세요"></textarea>
+            <label class="font-label" for="fontFamily">글씨체</label><select id="fontFamily" aria-describedby="fontStatus"></select>
+            <p id="fontStatus" class="edit-hint" role="status"></p>
             <div class="field-row">
               <label>글자색 <input id="textColor" type="color" value="#fffaf0" /></label>
               <label>글자 크기 <input id="fontSize" type="range" min="18" max="216" value="42" /></label>
             </div>
-            <div class="segmented" id="textPosition" aria-label="문구 위치">
-              <button type="button" data-value="top">위</button>
-              <button type="button" data-value="center">가운데</button>
-              <button class="active" type="button" data-value="bottom">아래</button>
+            <label class="sticker-control">가로 위치 <input id="textX" type="range" min="-50" max="150" step="0.5" value="50" /></label>
+            <label class="sticker-control">세로 위치 <input id="textY" type="range" min="-50" max="150" step="0.5" value="50" /></label>
+            <label class="sticker-control">회전 <input id="textRotation" type="range" min="-180" max="180" value="0" /></label>
+            <p class="edit-hint">미리보기에서 텍스트를 눌러 자유롭게 끌어 옮기세요. 방향키로도 이동할 수 있어요.</p>
+            <div class="layer-actions"><button id="duplicateText" type="button">텍스트 복제</button><button id="deleteText" type="button">텍스트 삭제</button></div>
             </div>
           </div>
 
