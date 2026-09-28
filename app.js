@@ -313,7 +313,7 @@ function bindPhotoControls(){
  $("#backgroundColor").oninput=e=>{checkpoint();state.backgroundColor=e.target.value;refreshEdit();};
 }
 
-function drawSelection(c,w,h){const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#a9473e";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
+function drawSelection(c,w,h){const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
 async function prepareLayerAssets(layers=[]){const assets={};for(const l of layers){if(l.dataUrl){const image=await imageFromDataUrl(l.dataUrl);assets[l.key]={label:l.label||"내 스티커",image,url:l.dataUrl};}}return assets;}
 async function restoreLayerAssets(layers=[]){Object.assign(STICKERS,await prepareLayerAssets(layers));}
 async function start(){
