@@ -158,7 +158,13 @@ function templateHtml(t){
  const url=t.frame==="custom"?"data:image/svg+xml,"+encodeURIComponent(svg):frameAssets[t.frame]?.url||"";
  return `<button type="button" class="template-card ${t.id===state.templateId?"active":""}" data-template="${escapeHtml(t.id)}" style="--preview-color:${t.color}"><span class="template-preview"><img src="${url}" alt="" /></span><strong>${escapeHtml(t.name)}</strong><small>${escapeHtml(t.subtitle||"my preset")}</small></button>`;
 }
-function renderTemplates(){ $("#templateGrid").innerHTML=allTemplates().map(templateHtml).join(""); }
+function renderTemplates(){
+ $("#templateGrid").innerHTML=allTemplates().map(templateHtml).join("");
+ $("#savedTemplateList").innerHTML=userTemplates.map(t=>templateHtml(t).replace('data-template=','data-saved-template=')).join("");
+ $("#savedTemplateCount").textContent=userTemplates.length;$("#savedTemplateEmpty").hidden=userTemplates.length>0;
+ selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;
+ $("#updateTemplate").disabled=$("#deleteTemplate").disabled=!selectedUserTemplateId;
+}
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function stickerSvg(key,s){return `<button type="button" class="sticker ${state.sticker===key?"active":""}" data-sticker="${escapeHtml(key)}" aria-label="${escapeHtml(s.label)}" title="${escapeHtml(s.label)}"><img src="${s.url}" alt="" loading="lazy" /></button>`;}
 function renderStickers(){ $("#stickerGrid").innerHTML=Object.entries(STICKERS).sort(([a],[b])=>(STICKER_GROUPS.indexOf(stickerCategory(a))-STICKER_GROUPS.indexOf(stickerCategory(b)))||(["letters","numbers"].includes(stickerCategory(a))?a.localeCompare(b,"en",{numeric:true}):0)).map(([k,s])=>stickerSvg(k,s)).join(""); }
@@ -203,6 +209,8 @@ function bindEvents(){
   $("#download").addEventListener("click",downloadPng); $("#exportJson").addEventListener("click",exportProject);
   $("#openImport").addEventListener("click",()=>$("#importDialog").showModal()); $("#jsonInput").addEventListener("change",importProject);
   $("#privacyInfo").addEventListener("click",()=>$("#infoDialog").showModal());
+  $("#savedTemplateList").addEventListener("click",e=>{const b=e.target.closest('[data-saved-template]');if(!b)return;const t=userTemplates.find(t=>t.id===b.dataset.savedTemplate);if(t){$("#templateName").value=t.name;applyTemplateSettings(t);}});
+  $("#resetTemplate").addEventListener("click",async()=>{const t=activeTemplate();await applyTemplateSettings({...t,texts:migrateTexts(t),layers:t.layers??(t.sticker?[stickerLayer(t.sticker)]:[])});state.images=state.images.map(r=>r?{...r,position:{x:.5,y:.5},zoom:1,rotate:0}:null);refreshEdit();$("#statusText").textContent="템플릿 초기화됨";});
   $("#saveTemplate").addEventListener("click",saveTemplate); $("#updateTemplate").addEventListener("click",updateTemplate); $("#deleteTemplate").addEventListener("click",deleteTemplate);
   bindCanvasEditing();
 }
