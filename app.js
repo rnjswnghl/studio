@@ -10,7 +10,7 @@ export const RATIOS = {
 };
 
 export const DEFAULT_TEMPLATES = [
-  {id:"custom-blank",name:"직접 만들기",subtitle:"빈 캔버스 · 자유 배치",frame:"custom",ratio:"1:1",color:"#17171b",customSlots:[],layers:[],texts:[],caption:"",sticker:"",backgroundColor:"#17171b"},
+  {id:"custom-blank",name:"직접 만들기",subtitle:"빈 캔버스 · 자유 배치",frame:"custom",ratio:"1:1",color:"#ffffff",customSlots:[],layers:[],texts:[],caption:"",sticker:"",backgroundColor:"#ffffff"},
   {id:"minimal-duo",name:"모노 듀오",subtitle:"2컷 · 미니멀",frame:"custom",ratio:"4:5",color:"#17171b",backgroundColor:"#17171b",customSlots:[{x:.08,y:.08,w:.84,h:.36},{x:.08,y:.48,w:.84,h:.36}],layers:[],texts:[],caption:"",sticker:""},
   {id:"contact-grid",name:"컨택트 시트",subtitle:"4컷 · 그리드",frame:"custom",ratio:"1:1",color:"#17171b",backgroundColor:"#17171b",customSlots:[{x:.06,y:.06,w:.42,h:.42},{x:.52,y:.06,w:.42,h:.42},{x:.06,y:.52,w:.42,h:.42},{x:.52,y:.52,w:.42,h:.42}],layers:[],texts:[],caption:"",sticker:""},
   {id:"editorial-collage",name:"에디토리얼",subtitle:"3컷 · 콜라주",frame:"custom",ratio:"4:5",color:"#222228",backgroundColor:"#222228",customSlots:[{x:.06,y:.06,w:.58,h:.56},{x:.68,y:.12,w:.26,h:.36},{x:.32,y:.67,w:.62,h:.27}],layers:[],texts:[],caption:"",sticker:""},
@@ -375,7 +375,7 @@ function syncTextControls(){
 }
 function addText(copy){
  if(state.texts.length>=100){$("#fontStatus").textContent='텍스트는 최대 100개까지 추가할 수 있어요.';return;}
- checkpoint();const t=textLayer(copy?{...copy,id:crypto.randomUUID(),captionX:copy.captionX+.03,captionY:copy.captionY+.03}:{captionX:.5+(state.texts.length%4)*.03,captionY:.5+(state.texts.length%4)*.05});
+ checkpoint();const t=textLayer(copy?{...copy,id:crypto.randomUUID(),captionX:copy.captionX+.03,captionY:copy.captionY+.03}:{textColor:parseInt((state.backgroundColor||"#17171b").slice(1),16)>0x888888?"#171717":"#eeeeee",captionX:.5+(state.texts.length%4)*.03,captionY:.5+(state.texts.length%4)*.05});
  state.texts.push(t);activeTextId=selectedLayer=t.id;textEditorOpen=true;refreshEdit();$("#caption").focus();$("#caption").select();
 }
 function deleteText(){

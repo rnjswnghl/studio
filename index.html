@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="사진과 손글씨를 조합해 인생네컷 감성의 이미지를 만드는 로컬 편집기" />
-    <meta property="og:title" content="컷앤노트 — 짤·카드 스튜디오" />
+    <meta property="og:title" content="CUT&amp;NOTE" />
     <meta property="og:description" content="사진은 브라우저 안에서만 편집하고 PNG로 저장합니다." />
-    <title>컷앤노트 — 짤·카드 스튜디오</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ffffff'/%3E%3Crect x='10' y='16' width='44' height='34' rx='5' fill='none' stroke='%23171717' stroke-width='4'/%3E%3Ccircle cx='32' cy='33' r='10' fill='none' stroke='%23171717' stroke-width='4'/%3E%3Cpath d='M18 16l4-6h11l4 6' fill='none' stroke='%23171717' stroke-width='4'/%3E%3C/svg%3E" />
+    <title>CUT&amp;NOTE</title>
+    <link rel="icon" type="image/svg+xml" href="brand.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Nanum+Brush+Script&family=Nanum+Pen+Script&family=Noto+Serif+KR:wght@400&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -16,9 +16,9 @@
   <body>
     <a class="skip-link" href="#editor">편집기로 건너뛰기</a>
     <header class="topbar">
-      <a class="brand" href="#editor" aria-label="컷앤노트 홈">
-        <span class="brand-mark" aria-hidden="true">▣</span>
-        <span>컷앤노트</span>
+      <a class="brand" href="#editor" aria-label="CUT&NOTE 홈">
+        <img class="brand-mark" src="brand.svg" alt="" width="30" height="30" />
+        <span>CUT&amp;NOTE</span>
       </a>
       <div class="top-actions">
         
@@ -28,14 +28,11 @@
     </header>
 
     <main id="editor" class="workspace">
-      <div class="studio-bar"><h1 id="page-title">STUDIO <span>/ 03</span></h1><nav class="mobile-tools" aria-label="편집 패널"><button data-mobile="photo" class="active" type="button">사진</button><button data-mobile="text" type="button">텍스트</button><button data-mobile="canvas" type="button">캔버스</button><button data-mobile="library" type="button">소재</button></nav><span class="studio-code">CUT &amp; NOTE</span></div>
+      <div class="studio-bar"><h1 id="page-title">STUDIO</h1><nav class="mobile-tools" aria-label="편집 패널"><button data-mobile="photo" class="active" type="button">사진</button><button data-mobile="text" type="button">텍스트</button><button data-mobile="library" type="button">소재</button></nav></div>
 
       <section class="editor-shell" aria-label="이미지 편집기">
         <aside class="control-panel" aria-label="편집 도구">
-          <div class="panel-heading">
-            <span class="step-num">01</span>
-            <div><h2>EDIT</h2></div>
-          </div>
+
 
           <label class="drop-zone" id="dropZone" for="imageInput">
             <input id="imageInput" type="file" accept="image/png,image/jpeg" multiple />

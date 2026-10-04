@@ -9,8 +9,8 @@ export function setupStudioUI() {
     const summary = document.createElement('summary'); summary.textContent = label;
     detail.append(summary, content); left.append(detail); return detail;
   }
-  const panels = {photo:section('사진', 'photo', photo, true),text:section('텍스트', 'text', text),canvas:section('캔버스', 'canvas', paper)};
-  text.querySelector('.tool-label')?.remove(); paper.querySelector('.tool-label')?.remove();
+  const panels = {photo:section('사진', 'photo', photo, true),text:section('텍스트', 'text', text)};
+  text.querySelector('.tool-label')?.remove(); paper.querySelector('.tool-label')?.remove();paper.className='canvas-settings';$('.download-row').before(paper);
   const stickerSection = $('.sticker-section');
   const stickerPane = document.createElement('div'), layerPane = document.createElement('div'), templatePane = document.createElement('div');
   const grid = $('#stickerGrid');
@@ -66,7 +66,7 @@ export function setupStudioUI() {
   }
   help(panels.photo.querySelector('summary'),()=>$('#photoHelp').textContent+' PNG/JPEG 최대 4장. 사진을 더블클릭하면 교체합니다.');
   help(panels.text.querySelector('summary'),'텍스트를 추가한 뒤 캔버스에서 드래그하세요. 방향키로 이동하고 Shift를 누르면 크게 이동합니다.');
-  help(panels.canvas.querySelector('summary'),'비율과 배경색을 선택합니다. 저장 파일은 미리보기와 같은 구성으로 출력됩니다.');
+  help(paper,'비율과 배경색을 선택합니다. 저장 파일은 미리보기와 같은 구성으로 출력됩니다.');
   help($('.stage-topline'),'사진은 칸 안에서 드래그해 크롭합니다. 스티커와 텍스트는 드래그로 이동합니다. 편집 가능한 원본은 JSON으로 저장하세요.');
   help($('#customLayout'),'최대 4칸. 아래 사진칸 선택창에서 대상을 고른 뒤 위치와 크기를 조절하세요. 사진칸 이동 모드를 끄면 사진 크롭을 조절합니다.');
   for(const p of document.querySelectorAll('.edit-hint,.canvas-help')){

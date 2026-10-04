@@ -62,3 +62,11 @@
 - 도움말 말풍선: hover/focus/click/Escape 및 reduced-motion 대응.
 - 모든 선택창, 버튼, 슬라이더, 입력창 스타일 통일.
 - 기존 사진·스티커·레이아웃·텍스트와 JSON/PDF/PNG/JPEG 기능 회귀 검증 및 UI 전환 검증.
+
+## 2026-10-04 · CUT&NOTE 브랜드 정리
+- 브라우저 title/OG title과 헤더 이름을 CUT&NOTE로 통일.
+- 검정 바탕·흰 카메라 선의 동일 SVG를 favicon과 헤더에 사용.
+- STUDIO /03와 EDIT 장식 표기 제거.
+- 직접 만들기 기본 흰 배경 및 새 텍스트 대비색 적용.
+- 별도 캔버스 도구 탭 제거, 비율/배경색을 캔버스 하단 공통 도구로 이동.
+- UI·편집·내보내기·JSON·반응형 검증 및 Node 14개 통과.
