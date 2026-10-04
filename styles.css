@@ -224,3 +224,9 @@ dialog { border-radius:8px; background:#fff; }
 dialog h2 { font-size:1.4rem; line-height:1.5; }
 @media(max-width:760px) { .workspace { padding-top:2rem; } .intro { grid-template-columns:1fr; gap:1rem; margin-bottom:2rem; } .intro h1 { font-size:clamp(1.85rem,8vw,2.8rem); } .topbar { height:64px; } .brand { font-size:1rem; } .stage { padding:1.2rem; } }
 @media(max-width:380px) { .stage { padding:.8rem; } }
+
+.build-own {width:100%;padding:.8rem;background:#171717;color:white;border:0;border-radius:4px;font:inherit;font-size:.8rem;}
+.export-format {display:grid;gap:.3rem;font-size:.7rem;}
+.export-format select {max-width:100%;padding:.6rem;background:white;border:1px solid #ddd;border-radius:4px;color:#171717;}
+.download-row {flex-wrap:wrap;gap:.8rem;}
+[hidden] {display:none!important;}
