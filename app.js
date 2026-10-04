@@ -2,7 +2,7 @@ import { setupStudioUI } from "./ui.js";
 import { canvasPdf } from "./export.js";
 import { TEXT_FONTS, textLayer, migrateTexts, validTexts } from "./text.js";
 import { stickerLayer, layerBounds, hitLayer, validLayers } from "./editing.js";
-import { stickerAssets, frameAssets, prepareAssets, framePlacement } from "./assets.js";
+import { stickerAssets, frameAssets, prepareAssets, framePlacement, stickerCategory, STICKER_GROUPS } from "./assets.js";
 export const RATIOS = {
   "1:1": [1080, 1080],
   "4:5": [1080, 1350],
@@ -161,7 +161,7 @@ function templateHtml(t){
 function renderTemplates(){ $("#templateGrid").innerHTML=allTemplates().map(templateHtml).join(""); }
 function escapeHtml(v){return String(v).replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
 function stickerSvg(key,s){return `<button type="button" class="sticker ${state.sticker===key?"active":""}" data-sticker="${escapeHtml(key)}" aria-label="${escapeHtml(s.label)}" title="${escapeHtml(s.label)}"><img src="${s.url}" alt="" loading="lazy" /></button>`;}
-function renderStickers(){ $("#stickerGrid").innerHTML=Object.entries(STICKERS).map(([k,s])=>stickerSvg(k,s)).join(""); }
+function renderStickers(){ $("#stickerGrid").innerHTML=Object.entries(STICKERS).sort(([a],[b])=>(STICKER_GROUPS.indexOf(stickerCategory(a))-STICKER_GROUPS.indexOf(stickerCategory(b)))||(["letters","numbers"].includes(stickerCategory(a))?a.localeCompare(b,"en",{numeric:true}):0)).map(([k,s])=>stickerSvg(k,s)).join(""); }
 
 async function handleImages(files){
   $("#fileError").textContent=""; const list=[...files].slice(0,4); if(!list.length)return;

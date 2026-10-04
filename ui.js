@@ -1,3 +1,4 @@
+import {stickerCategory} from "./assets.js";
 export function setupStudioUI() {
   const $ = s => document.querySelector(s);
   const left = $('.control-panel'), right = $('.template-panel');
@@ -57,10 +58,11 @@ export function setupStudioUI() {
   new MutationObserver(()=>{if(!$('#textEditor').hidden){panels.text.open=true;if(matchMedia('(max-width: 760px)').matches)mobile('text');}}).observe($('#textEditor'),{attributes:true,attributeFilter:['hidden']});
 
   const shell=$('.editor-shell');
+  const chevron=key=>`<svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="${key==='left'?'M10 3 5 8l5 5':'M6 3l5 5-5 5'}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   for(const [key,panel,label]of [['left',left,'편집 도구'],['right',right,'소재']]){
     const rail=document.createElement('div');rail.className='side-rail side-'+key;panel.before(rail);rail.append(panel);
-    const toggle=document.createElement('button');toggle.type='button';toggle.className='panel-toggle';toggle.id='toggle-'+key;toggle.textContent=key==='left'?'‹':'›';toggle.setAttribute('aria-label',label+' 접기');toggle.setAttribute('aria-expanded','true');panel.id='panel-'+key;toggle.setAttribute('aria-controls',panel.id);rail.prepend(toggle);
-    toggle.onclick=()=>{const collapsed=shell.classList.toggle(key+'-collapsed');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',label+(collapsed?' 펼치기':' 접기'));toggle.textContent=collapsed?label:(key==='left'?'‹':'›');panel.inert=collapsed&&!matchMedia("(max-width: 760px)").matches;};
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='panel-toggle';toggle.id='toggle-'+key;toggle.innerHTML=chevron(key);toggle.setAttribute('aria-label',label+' 접기');toggle.setAttribute('aria-expanded','true');panel.id='panel-'+key;toggle.setAttribute('aria-controls',panel.id);const head=document.createElement('div');head.className='rail-header';head.append(toggle);rail.prepend(head);
+    toggle.onclick=()=>{const collapsed=shell.classList.toggle(key+'-collapsed');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',label+(collapsed?' 펼치기':' 접기'));if(collapsed)toggle.textContent=label;else toggle.innerHTML=chevron(key);panel.inert=collapsed&&!matchMedia("(max-width: 760px)").matches;};
   }
   window.addEventListener('resize',()=>{left.inert=shell.classList.contains('left-collapsed')&&innerWidth>760;right.inert=shell.classList.contains('right-collapsed')&&innerWidth>760;});
   function advanced(parent,ids,label){const d=document.createElement('details');d.className='advanced-controls';const h=document.createElement('summary');h.textContent=label;d.append(h);for(const id of ids){const el=$('#'+id);d.append(el.closest('label'));}parent.append(d);}
@@ -96,7 +98,7 @@ export function setupStudioUI() {
     p.hidden=true;
   }
   const carousel=document.createElement('div');carousel.className='carousel-nav';
-  const categories=[['전체',()=>true],['크롬',k=>['star','heart','planet','spark','cross','flower','infinity','ribbon','crown','wave-heart','butterfly','splash','ring','rose','thumb'].includes(k)||k.startsWith('metal-')],['자개',k=>k.startsWith('pearl-')],['유리',k=>k.startsWith('glass-')||k==='bubble-sheet'],['표정',k=>k.startsWith('emoji-')||k.startsWith('mood-')||k.startsWith('extra-')||k==='smile']];
+  const categories=[['전체',()=>true],... [['크롬','chrome'],['메탈','metal'],['문자','letters'],['숫자','numbers'],['자개','pearl'],['유리','glass'],['표정','emoji'],['내 소재','custom']].map(([label,key])=>[label,k=>stickerCategory(k)===key])];
   let filter=categories[0][1];
   function applyFilter(){for(const b of grid.children)b.hidden=!filter(b.dataset.sticker);}
   for(const [label,predicate]of categories){const b=document.createElement('button');b.type='button';b.textContent=label;b.className=label==='전체'?'active':'';b.onclick=()=>{filter=predicate;for(const x of carousel.children)x.classList.toggle('active',x===b);applyFilter();};carousel.append(b);}

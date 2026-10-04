@@ -1,3 +1,9 @@
+export const STICKER_GROUPS = ['chrome','metal','letters','numbers','pearl','glass','emoji','custom'];
+export function stickerCategory(key){
+ if(key.startsWith('metal-icon-'))return 'metal';if(key.startsWith('metal-letter-'))return 'letters';if(key.startsWith('metal-number-'))return 'numbers';
+ if(key.startsWith('pearl-'))return 'pearl';if(key.startsWith('glass-')||key==='bubble-sheet')return 'glass';
+ if(key==='smile'||/^(emoji-|mood-|extra-)/.test(key))return 'emoji';if(key.startsWith('custom-'))return 'custom';return 'chrome';
+}
 // Crops refer to the supplied originals. All extraction stays on this device.
 export const stickerAssets = {};
 export const frameAssets = {};
@@ -24,7 +30,17 @@ function clearFragments(source,threshold=.01){
   for(let n=0;n<w*h;n++){if(seen[n]||p[n*4+3]<25)continue;const group=[n];seen[n]=1;for(let i=0;i<group.length;i++){const v=group[i],x=v%w;for(const q of [x>0?v-1:-1,x<w-1?v+1:-1,v-w,v+w])if(q>=0&&q<w*h&&!seen[q]&&p[q*4+3]>=25){seen[q]=1;group.push(q);}}largest=Math.max(largest,group.length);groups.push(group);}
   for(const group of groups)if(group.length<largest*threshold)for(const n of group)p[n*4+3]=0;c.putImageData(d,0,0);return source;
 }
-function add(key,label,img,box,bg){const image=trim(clearFragments(cut(img,box,bg),key.startsWith("pearl-")?.04:.01));stickerAssets[key]={label,image,url:image.toDataURL()};}
+function eraseHoles(source,seeds=[]){
+ const c=source.getContext('2d'),w=source.width,h=source.height,d=c.getImageData(0,0,w,h),p=d.data,seen=new Uint8Array(w*h),queue=[];
+ const visit=n=>{if(n<0||n>=w*h||seen[n])return;seen[n]=1;const i=n*4,lo=Math.min(p[i],p[i+1],p[i+2]),hi=Math.max(p[i],p[i+1],p[i+2]);if(hi-lo<16&&lo>=220){queue.push(n);p[i+3]=0;}};
+ for(const [x,y]of seeds)visit(Math.round(y)*w+Math.round(x));for(let i=0;i<queue.length;i++){const n=queue[i],x=n%w;if(x>0)visit(n-1);if(x<w-1)visit(n+1);visit(n-w);visit(n+w);}c.putImageData(d,0,0);return source;
+}
+function add(key,label,img,box,bg,holes=[]){
+ const source=eraseHoles(cut(img,box,bg),holes),ctx=source.getContext('2d');
+ // Adjacent sheets have staggered objects; exclude only the neighboring shapes.
+ if(key==='metal-icon-dog'){ctx.clearRect(0,0,165,95);ctx.clearRect(365,0,45,115);}
+ if(key==='metal-icon-planet')ctx.clearRect(160,255,190,30);
+ const image=trim(clearFragments(source,key.startsWith("pearl-")?.04:.01));stickerAssets[key]={label,image,url:image.toDataURL()};}
 export async function prepareAssets(){
   const ids=Array.from({length:16},(_,i)=>i+1);
   const pairs=await Promise.all(ids.map(async id=>[id,await load(`assets/references/ref-${id}.png`)]));const refs=Object.fromEntries(pairs);
@@ -44,6 +60,24 @@ export async function prepareAssets(){
   for(let row=0;row<5;row++)for(let col=0;col<3;col++)add('metal-heart-'+row+'-'+col,'메탈·유리 하트 '+(row*3+col+1),refs[3],[col*187,row*199,187,199],247);
   const extraEmoji=[[9,40,122,135],[139,40,115,133],[257,42,110,129],[372,43,104,115],[473,43,99,136],[565,58,83,106],[649,83,81,90],[0,173,140,124],[139,175,134,126],[275,168,116,137],[391,172,128,131],[522,170,95,132],[620,186,114,125],[9,308,131,125],[141,304,146,127],[289,299,135,134],[428,306,113,128],[568,307,135,119],[13,437,119,132],[140,436,128,139],[278,440,105,116],[385,436,130,131],[519,446,107,115],[627,456,98,109],[16,567,116,128],[139,570,110,119],[255,556,117,131],[378,560,118,129],[504,570,112,126],[618,570,114,132]];
   extraEmoji.forEach((box,i)=>add('extra-emoji-'+i,'추가 표정 '+(i+1),refs[8],box,243));
+  const iconSheet=await load('assets/references/metal-icons-source.png');
+  const iconLabels=['선물','커서','커피머신','토스터','펜','방패','금고','자물쇠','알람시계','모래시계','카메라','벨','헤드폰','시계','휴대폰','모니터','게임패드','책','폴더','별','우편함','봉투','공구','트로피'];
+  for(let row=0;row<6;row++)for(let col=0;col<4;col++)add('metal-icon-'+(row*4+col),'메탈 '+iconLabels[row*4+col],iconSheet,[col*184,row*184,184,184],235);
+  const letterSheet=await load('assets/references/metal-letters-source.png');
+  const letters=[
+   ['A',30,35,280,300,[[162,125]]],['B',310,35,260,300,[[130,123],[130,220]]],['C',570,35,260,300],['D',830,35,300,300,[[145,180]]],
+   ['E',30,335,275,305],['F',310,335,245,305],['G',560,335,280,305],['G-alt',840,325,290,320],
+   ['H',35,660,270,285],['I',310,660,125,285],['I-alt',450,660,130,285],['J',585,650,250,295],['K',850,650,285,295],
+   ['L',5,950,235,265],['M',245,950,315,265],['N',565,950,270,265],['O',855,950,265,285,[[132,150]]],
+   ['O-alt',5,1230,245,295,[[110,150]]],['P',255,1225,250,295,[[120,98]]],['R',505,1235,240,290,[[112,105]]],['S',745,1235,190,285],['S-alt',935,1235,200,285],
+   ['T',5,1525,260,245],['U',265,1520,255,245],['U-alt',525,1520,255,245],['V',785,1505,345,270],
+   ['Y',95,1760,280,285],['Z',370,1770,250,270],['X',650,1760,300,280]
+  ];
+  for(const [key,x,y,w,h,holes]of letters)add('metal-letter-'+key,'메탈 '+key.replace('-alt',' Ⅱ'),letterSheet,[x,y,w,h],229,holes);
+  const numberSheet=await load('assets/references/metal-numbers-source.png');
+  const numbers=[['0',5,35,380,465,[[187,233]]],['1',390,5,365,510],['2',755,30,375,450],['3',5,505,380,460],['4',390,510,375,430],['5',780,530,355,425],['6',5,990,390,480,[[207,315]]],['7',395,960,370,425],['8',775,975,360,420,[[175,130],[175,295]]],['9',5,1490,395,485,[[215,190]]]];
+  for(const [key,x,y,w,h,holes]of numbers)add('metal-number-'+key,'메탈 숫자 '+key,numberSheet,[x,y,w,h],255,holes);
+  for(const [key,label,box]of [['planet','행성',[400,1375,350,285]],['bow','리본',[750,1385,380,320]],['dog','풍선 강아지',[405,1625,410,405]],['star','풍선 별',[805,1710,330,315]]])add('metal-icon-'+key,'메탈 '+label,numberSheet,box,255);
   const specs={
     camera:{ref:14,box:[23,580,1105,724],holes:[[74,226,539,397]],key:255},
     fourcut:{ref:11,box:[75,3,413,991],holes:[[63,30,285,212],[63,272,285,211],[63,513,285,211],[63,754,285,210]]},

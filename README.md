@@ -44,7 +44,7 @@ npm run samples
 
 브라우저 기능 검증: Playwright와 Edge가 설치된 환경에서 로컬 서버 실행 후 `node scripts/qa-browser.cjs`. 별도 위치의 Playwright는 `PLAYWRIGHT_MODULE`, 확인할 배포 주소는 `QA_URL` 환경 변수로 지정합니다. 결과·검증용 PNG는 Git에서 제외한 `qa/`에 생성합니다. 이 검증은 새 브라우저 세션과 생성한 시험 이미지만 사용합니다.
 
-공개 주소: https://cut-and-note.rnjswnghl.chatgpt.site
+공개 주소: https://cutandnote.rnjswnghl.chatgpt.site
 
 배포 빌드: `npm run build` → `dist`. 기존 Sites 프로젝트 설정은 `.openai/hosting.json`에 보관합니다.
 
