@@ -1,3 +1,4 @@
+import { setupStudioUI } from "./ui.js";
 import { canvasPdf } from "./export.js";
 import { TEXT_FONTS, textLayer, migrateTexts, validTexts } from "./text.js";
 import { stickerLayer, layerBounds, hitLayer, validLayers } from "./editing.js";
@@ -9,10 +10,10 @@ export const RATIOS = {
 };
 
 export const DEFAULT_TEMPLATES = [
-  {id:"custom-blank",name:"직접 만들기",subtitle:"빈 캔버스 · 자유 배치",frame:"custom",ratio:"1:1",color:"#ffffff",customSlots:[],layers:[],texts:[],caption:"",sticker:"",backgroundColor:"#ffffff"},
-  {id:"minimal-duo",name:"모노 듀오",subtitle:"2컷 · 미니멀",frame:"custom",ratio:"4:5",color:"#ffffff",backgroundColor:"#ffffff",customSlots:[{x:.08,y:.08,w:.84,h:.36},{x:.08,y:.48,w:.84,h:.36}],layers:[],texts:[],caption:"",sticker:""},
-  {id:"contact-grid",name:"컨택트 시트",subtitle:"4컷 · 그리드",frame:"custom",ratio:"1:1",color:"#ffffff",backgroundColor:"#ffffff",customSlots:[{x:.06,y:.06,w:.42,h:.42},{x:.52,y:.06,w:.42,h:.42},{x:.06,y:.52,w:.42,h:.42},{x:.52,y:.52,w:.42,h:.42}],layers:[],texts:[],caption:"",sticker:""},
-  {id:"editorial-collage",name:"에디토리얼",subtitle:"3컷 · 콜라주",frame:"custom",ratio:"4:5",color:"#eeeeee",backgroundColor:"#eeeeee",customSlots:[{x:.06,y:.06,w:.58,h:.56},{x:.68,y:.12,w:.26,h:.36},{x:.32,y:.67,w:.62,h:.27}],layers:[],texts:[],caption:"",sticker:""},
+  {id:"custom-blank",name:"직접 만들기",subtitle:"빈 캔버스 · 자유 배치",frame:"custom",ratio:"1:1",color:"#17171b",customSlots:[],layers:[],texts:[],caption:"",sticker:"",backgroundColor:"#17171b"},
+  {id:"minimal-duo",name:"모노 듀오",subtitle:"2컷 · 미니멀",frame:"custom",ratio:"4:5",color:"#17171b",backgroundColor:"#17171b",customSlots:[{x:.08,y:.08,w:.84,h:.36},{x:.08,y:.48,w:.84,h:.36}],layers:[],texts:[],caption:"",sticker:""},
+  {id:"contact-grid",name:"컨택트 시트",subtitle:"4컷 · 그리드",frame:"custom",ratio:"1:1",color:"#17171b",backgroundColor:"#17171b",customSlots:[{x:.06,y:.06,w:.42,h:.42},{x:.52,y:.06,w:.42,h:.42},{x:.06,y:.52,w:.42,h:.42},{x:.52,y:.52,w:.42,h:.42}],layers:[],texts:[],caption:"",sticker:""},
+  {id:"editorial-collage",name:"에디토리얼",subtitle:"3컷 · 콜라주",frame:"custom",ratio:"4:5",color:"#222228",backgroundColor:"#222228",customSlots:[{x:.06,y:.06,w:.58,h:.56},{x:.68,y:.12,w:.26,h:.36},{x:.32,y:.67,w:.62,h:.27}],layers:[],texts:[],caption:"",sticker:""},
   { id: "rec-original", name: "REC 카메라", subtitle: "recording frame", frame: "rec", ratio: "4:5", color: "#f3f0eb", accent: "#a9473e" },
   { id: "finder-original", name: "뷰파인더", subtitle: "view finder", frame: "finder", ratio: "1:1", color: "#f3f0eb", accent: "#a9473e" },
   { id: "camera-silver", name: "은빛 디카", subtitle: "digital camera", frame: "camera", ratio: "4:5", color: "#d8d3c7", accent: "#b34f45" },
@@ -24,7 +25,7 @@ export const DEFAULT_TEMPLATES = [
 export const STICKERS = stickerAssets;
 
 const INITIAL_STATE = {
-  ratio: "1:1", caption: "", textColor: "#fffaf0",
+  ratio: "1:1", caption: "", textColor: "#eeeeee", backgroundColor: "#17171b",
   fontSize: 42, textPosition: "bottom", templateId: "camera-silver", sticker: "spark", images: [],
 };
 const state = { ...INITIAL_STATE, images: [] };
@@ -104,8 +105,8 @@ function coverImage(c, img, x, y, w, h, position={x:.5,y:.5}, zoom=1, rotate=0) 
   c.drawImage(img,sx,sy,sw,sh,x,y,w,h);c.restore();
 }
 function drawPlaceholder(c,x,y,w,h,index) {
-  c.fillStyle = index%2 ? "#c8c8c8" : "#d8d8d8"; c.fillRect(x,y,w,h);
-  c.strokeStyle="rgba(30,30,30,.25)"; c.lineWidth=Math.max(2,w*.006); c.beginPath(); c.moveTo(x,y+h); c.lineTo(x+w*.36,y+h*.58); c.lineTo(x+w*.56,y+h*.73); c.lineTo(x+w,y+h*.3); c.stroke();
+  c.fillStyle = index%2 ? "#45454e" : "#55555f"; c.fillRect(x,y,w,h);
+  c.strokeStyle="rgba(225,225,235,.2)"; c.lineWidth=Math.max(2,w*.006); c.beginPath(); c.moveTo(x,y+h); c.lineTo(x+w*.36,y+h*.58); c.lineTo(x+w*.56,y+h*.73); c.lineTo(x+w,y+h*.3); c.stroke();
 }
 function imageForSlot(index){return state.images[index] || null; }
 function drawSlot(c,x,y,w,h,index) { const record=imageForSlot(index); if(record?.img) coverImage(c,record.img,x,y,w,h,record.position,record.zoom??1,record.rotate??0); else drawPlaceholder(c,x,y,w,h,index); }
@@ -116,7 +117,7 @@ function slotRects(w,h,t=activeTemplate()){
  return p.a.holes.map(([x,y,rw,rh])=>({x:p.x+x*p.scale,y:p.y+y*p.scale,w:rw*p.scale,h:rh*p.scale}));
 }
 function drawFrame(c,w,h,t){
- c.fillStyle=state.backgroundColor||"#f3f0eb";c.fillRect(0,0,w,h);if(t.frame==="custom"){slotRects(w,h,t).forEach((r,i)=>drawSlot(c,r.x,r.y,r.w,r.h,i));return;}const p=placedFrame(w,h,t.frame);if(!p)return;
+ c.fillStyle=state.backgroundColor||"#17171b";c.fillRect(0,0,w,h);if(t.frame==="custom"){slotRects(w,h,t).forEach((r,i)=>drawSlot(c,r.x,r.y,r.w,r.h,i));return;}const p=placedFrame(w,h,t.frame);if(!p)return;
  const cx=w*(state.frameX??.5),cy=h*(state.frameY??.465);
  c.save();c.translate(cx,cy);c.rotate((state.frameRotation??0)*Math.PI/180);c.translate(-cx,-cy);slotRects(w,h,t).forEach((r,i)=>drawSlot(c,r.x,r.y,r.w,r.h,i));
  c.save();c.imageSmoothingQuality="high";c.drawImage(p.a.image,p.x,p.y,p.a.image.width*p.scale,p.a.image.height*p.scale);c.restore();c.restore();
@@ -257,7 +258,7 @@ async function applyTemplateSettings(t){
  for(const key of ["caption","sticker","textColor","fontSize","textPosition"])if(key in t)state[key]=t[key];
  await ensureTextFonts();syncControls();setRatio(state.ratio);renderTemplates();renderStickers();renderFileList();draw();scheduleSave();
 }
-function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#f3f0eb";syncLayerControls();syncTextControls();}
+function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#17171b";syncLayerControls();syncTextControls();}
 
 
 
@@ -337,7 +338,7 @@ function bindPhotoControls(){
  $("#backgroundColor").oninput=e=>{checkpoint();state.backgroundColor=e.target.value;refreshEdit();};
 }
 
-function drawSelection(c,w,h){const text=selectedText();if(text&&text.caption.trim()){const r=captionLayout(c,w,h,text);c.save();c.translate(r.x,r.y);c.rotate(r.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=2;c.setLineDash([8,6]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.restore();return;}const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#171717";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
+function drawSelection(c,w,h){const text=selectedText();if(text&&text.caption.trim()){const r=captionLayout(c,w,h,text);c.save();c.translate(r.x,r.y);c.rotate(r.rotation*Math.PI/180);c.strokeStyle="#b7b7ca";c.lineWidth=2;c.setLineDash([8,6]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.restore();return;}const l=chosen();if(!l||!STICKERS[l.key])return;const r=layerBounds(l,STICKERS[l.key].image,w,h);c.save();c.translate(r.x,r.y);c.rotate(l.rotation*Math.PI/180);c.strokeStyle="#b7b7ca";c.lineWidth=3;c.setLineDash([10,7]);c.strokeRect(-r.w/2,-r.h/2,r.w,r.h);c.setLineDash([]);c.fillStyle="#fff";for(const [x,y] of [[r.w/2,r.h/2],[0,-r.h/2-32]]){c.beginPath();c.arc(x,y,12,0,Math.PI*2);c.fill();c.stroke();}c.restore();}
 async function prepareLayerAssets(layers=[]){const assets={};for(const l of layers){if(l.dataUrl){const image=await imageFromDataUrl(l.dataUrl);assets[l.key]={label:l.label||"내 스티커",image,url:l.dataUrl};}}return assets;}
 async function restoreLayerAssets(layers=[]){Object.assign(STICKERS,await prepareLayerAssets(layers));}
 
@@ -394,7 +395,7 @@ function bindTextEditing(){
 
 async function start(){
  $("#download").disabled=true;$("#statusText").textContent="원본 스티커와 프레임 준비 중…";
- try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();await ensureTextFonts();bindEvents();bindFreeEditing();bindCustomControls();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);$("#download").disabled=false;}
+ try{await prepareAssets();await restoreState();await restoreLayerAssets(state.layers);migrateLayers();await ensureTextFonts();bindEvents();bindFreeEditing();bindCustomControls();renderTemplates();renderStickers();syncControls();renderFileList();setRatio(state.ratio);setupStudioUI();$("#download").disabled=false;}
  catch(error){$("#statusText").textContent=error.message;}
 }
 start();

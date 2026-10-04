@@ -21,34 +21,30 @@
         <span>컷앤노트</span>
       </a>
       <div class="top-actions">
-        <span class="privacy-note"><i></i> 업로드 없이, 이 브라우저에서만</span>
+        
         <button class="text-button" id="openImport" type="button">JSON 불러오기</button>
         <button class="text-button" id="exportJson" type="button">JSON 저장</button>
       </div>
     </header>
 
     <main id="editor" class="workspace">
-      <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">PHOTO BOOTH NO. 03 · LOCAL ONLY</p>
-        <h1 id="page-title">오늘을 네 컷으로<br /><em>오래 남겨요.</em></h1>
-        <p>사진과 프레임을 고르고, 원한다면 텍스트와 스티커를 더해보세요. 모든 작업은 기기 안에서 끝납니다.</p>
-      </section>
+      <div class="studio-bar"><h1 id="page-title">STUDIO <span>/ 03</span></h1><nav class="mobile-tools" aria-label="편집 패널"><button data-mobile="photo" class="active" type="button">사진</button><button data-mobile="text" type="button">텍스트</button><button data-mobile="canvas" type="button">캔버스</button><button data-mobile="library" type="button">소재</button></nav><span class="studio-code">CUT &amp; NOTE</span></div>
 
       <section class="editor-shell" aria-label="이미지 편집기">
         <aside class="control-panel" aria-label="편집 도구">
           <div class="panel-heading">
             <span class="step-num">01</span>
-            <div><small>사진 넣기</small><h2>장면을 골라주세요</h2></div>
+            <div><h2>EDIT</h2></div>
           </div>
 
           <label class="drop-zone" id="dropZone" for="imageInput">
             <input id="imageInput" type="file" accept="image/png,image/jpeg" multiple />
             <span class="camera-doodle" aria-hidden="true">⌁</span>
             <strong>사진 고르기</strong>
-            <span>PNG · JPEG / 최대 4장 · 선택한 사진으로 교체</span>
+            <span>PNG / JPEG · 4 MAX</span>
           </label>
           <input id="slotImageInput" class="visually-hidden" type="file" accept="image/png,image/jpeg" />
-          <div id="customLayout" class="tool-block" hidden><strong>내 사진칸 만들기</strong><p class="edit-hint">사진칸을 추가한 뒤 아래에서 칸을 선택해 위치와 크기를 조절하세요. 최대 4칸.</p><label class="sticker-control"><input id="moveSlots" type="checkbox" /> 캔버스에서 사진칸 이동 (끄면 사진 크롭)</label><div class="layer-actions"><button id="addSlot" type="button">＋ 사진칸 추가</button><button id="deleteSlot" type="button">선택 칸 삭제</button></div><label class="sticker-control">칸 가로 위치 <input id="slotX" type="range" min="0" max="100" step="1" /></label><label class="sticker-control">칸 세로 위치 <input id="slotY" type="range" min="0" max="100" step="1" /></label><label class="sticker-control">칸 너비 <input id="slotW" type="range" min="5" max="100" step="1" /></label><label class="sticker-control">칸 높이 <input id="slotH" type="range" min="5" max="100" step="1" /></label></div><div class="file-list" id="fileList" aria-live="polite"></div>
+          <div id="customLayout" class="tool-block" hidden><strong>사진칸</strong><p class="edit-hint">사진칸을 추가한 뒤 아래에서 칸을 선택해 위치와 크기를 조절하세요. 최대 4칸.</p><label class="sticker-control"><input id="moveSlots" type="checkbox" /> 사진칸 이동 모드</label><div class="layer-actions"><button id="addSlot" type="button">＋ 사진칸 추가</button><button id="deleteSlot" type="button">선택 칸 삭제</button></div><label class="sticker-control">칸 가로 위치 <input id="slotX" type="range" min="0" max="100" step="1" /></label><label class="sticker-control">칸 세로 위치 <input id="slotY" type="range" min="0" max="100" step="1" /></label><label class="sticker-control">칸 너비 <input id="slotW" type="range" min="5" max="100" step="1" /></label><label class="sticker-control">칸 높이 <input id="slotH" type="range" min="5" max="100" step="1" /></label></div><div class="file-list" id="fileList" aria-live="polite"></div>
           <p class="error-message" id="fileError" role="alert"></p><div class="tool-block"><label>사진 칸 <select id="photoSlot" aria-describedby="photoHelp"></select></label><label class="sticker-control">사진 확대 <input id="photoZoom" type="range" min="0.5" max="4" step="0.05" value="1" /></label><label class="sticker-control">사진 회전 <input id="photoRotate" type="range" min="-180" max="180" value="0" /></label><div class="layer-actions"><button id="replacePhoto" type="button">사진 교체</button><button id="removePhoto" type="button">사진 비우기</button><button id="photoBefore" type="button">이전 칸과 교환</button><button id="photoAfter" type="button">다음 칸과 교환</button></div></div>
 
           <div class="tool-block">
@@ -74,8 +70,8 @@
           </div>
 
           <div class="tool-block">
-            <div class="tool-label"><span>03</span><strong>종이 비율</strong></div>
-            <label>종이 색 <input id="backgroundColor" type="color" value="#f3f0eb" /></label><div class="ratio-grid" id="ratios">
+            <div class="tool-label"><span>03</span><strong>캔버스</strong></div>
+            <label>배경색 <input id="backgroundColor" type="color" value="#f3f0eb" /></label><div class="ratio-grid" id="ratios">
               <button class="active" type="button" data-ratio="1:1"><i class="ratio-square"></i><span>1:1<small>피드</small></span></button>
               <button type="button" data-ratio="4:5"><i class="ratio-portrait"></i><span>4:5<small>포스트</small></span></button>
               <button type="button" data-ratio="9:16"><i class="ratio-story"></i><span>9:16<small>스토리</small></span></button>
@@ -92,13 +88,13 @@
             <canvas id="preview" width="1080" height="1080" aria-label="편집 결과 미리보기"></canvas>
             <div class="empty-canvas" id="emptyCanvas">
               <span>✦</span>
-              <strong>사진을 기다리고 있어요</strong>
-              <small>왼쪽에서 한 장 이상 골라주세요</small>
+              <strong>ADD YOUR PHOTOS</strong>
+              <small></small>
             </div>
             <p class="canvas-help">스티커·문구 드래그 이동 · 사진 더블클릭 교체 · 편집 대상에서 프레임 선택 후 이동</p>
           </div>
           <div class="download-row">
-            <div><strong id="statusText">자동 저장됨</strong><span>미리보기와 같은 크기로 저장돼요</span></div>
+            <div><strong id="statusText">자동 저장됨</strong></div>
             <label class="export-format">저장 형식<select id="exportFormat" aria-label="저장 형식"><option value="png">PNG 이미지</option><option value="jpg">JPEG 이미지</option><option value="pdf">PDF 문서</option></select></label><button class="download-button" id="download" type="button"><span>PNG로 저장</span><b>↓</b></button>
           </div>
         </section>
@@ -106,12 +102,12 @@
         <aside class="template-panel" aria-label="프레임과 스티커">
           <div class="panel-heading compact">
             <span class="step-num">04</span>
-            <div><small>분위기 고르기</small><h2>프레임 보관함</h2></div>
+            <div><h2>LIBRARY</h2></div>
           </div>
-          <button id="buildOwn" class="build-own" type="button">＋ 처음부터 직접 만들기</button><p class="edit-hint">템플릿을 고르거나 빈 캔버스에 나만의 구성을 만들어보세요.</p><div class="template-grid" id="templateGrid"></div>
+          <button id="buildOwn" class="build-own" type="button">＋ 직접 만들기</button><p class="edit-hint">템플릿을 고르거나 빈 캔버스에 나만의 구성을 만들어보세요.</p><div class="template-grid" id="templateGrid"></div>
 
           <div class="sticker-section">
-            <div class="tool-label"><span>05</span><strong>레퍼런스 스티커</strong></div>
+            <div class="tool-label"><span>05</span><strong>스티커</strong></div>
             <label class="sticker-control">내 이미지 스티커 <input id="customSticker" type="file" accept="image/png,image/jpeg" /></label><div class="sticker-grid" id="stickerGrid"></div>
             <p class="edit-hint">소재를 누를 때마다 추가됩니다. 캔버스에서 직접 드래그하거나 아래 목록에서 선택하세요.</p><label class="sticker-control">편집 대상 <select id="layerList" aria-label="편집할 레이어"></select></label><label class="sticker-control">크기 <input id="stickerSize" type="range" min="1" max="200" value="19" /></label><label class="sticker-control">가로 위치 <input id="stickerX" type="range" min="-50" max="150" value="82" /></label><label class="sticker-control">세로 위치 <input id="stickerY" type="range" min="-50" max="150" value="17" /></label><label class="sticker-control">회전 <input id="layerRotation" type="range" min="-180" max="180" value="0" /></label><label class="sticker-control">불투명도 <input id="layerOpacity" type="range" min="0" max="100" value="100" /></label><div class="layer-actions"><button id="duplicateLayer" type="button">복제</button><button id="flipLayer" type="button">좌우 반전</button><button id="layerForward" type="button">앞으로</button><button id="layerBackward" type="button">뒤로</button><button id="removeSticker" type="button">선택 삭제</button><button id="undoEdit" type="button">실행 취소</button><button id="redoEdit" type="button">다시 실행</button></div>
           </div>
@@ -133,7 +129,7 @@
     </main>
 
     <footer>
-      <strong>컷앤노트</strong><span>사진은 서버로 전송되지 않습니다.</span>
+      
       <nav aria-label="법적 안내"><button id="privacyInfo" type="button">개인정보 처리 안내</button><button id="resetApp" type="button">모든 로컬 데이터 지우기</button></nav>
     </footer>
 

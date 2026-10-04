@@ -4,7 +4,7 @@ export const TEXT_FONTS = [
   ['Nanum Pen Script', '나눔 펜 · 손글씨'], ['Nanum Brush Script', '나눔 붓 · 흘림체'],
 ];
 export function textLayer(overrides = {}) {
-  return {id:crypto.randomUUID(),caption:'새 텍스트',textColor:'#171717',fontSize:64,fontFamily:'Noto Sans KR',captionX:.5,captionY:.5,captionRotation:0,...overrides};
+  return {id:crypto.randomUUID(),caption:'새 텍스트',textColor:'#eeeeee',fontSize:64,fontFamily:'Noto Sans KR',captionX:.5,captionY:.5,captionRotation:0,...overrides};
 }
 export function migrateTexts(settings) {
   if (Array.isArray(settings.texts)) return structuredClone(settings.texts);
