@@ -19,17 +19,23 @@ function cut(img,box,background=null) {
   return out;
 }
 function trim(source){const c=source.getContext('2d'),{width:w,height:h}=source,p=c.getImageData(0,0,w,h).data;let x0=w,y0=h,x1=0,y1=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(p[(y*w+x)*4+3]>24){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}return x0>x1?source:cut(source,[x0,y0,x1-x0+1,y1-y0+1]);}
-function add(key,label,img,box,bg){const image=trim(cut(img,box,bg));stickerAssets[key]={label,image,url:image.toDataURL()};}
+function clearFragments(source,threshold=.01){
+  const c=source.getContext('2d'),w=source.width,h=source.height,d=c.getImageData(0,0,w,h),p=d.data,seen=new Uint8Array(w*h),groups=[];let largest=0;
+  for(let n=0;n<w*h;n++){if(seen[n]||p[n*4+3]<25)continue;const group=[n];seen[n]=1;for(let i=0;i<group.length;i++){const v=group[i],x=v%w;for(const q of [x>0?v-1:-1,x<w-1?v+1:-1,v-w,v+w])if(q>=0&&q<w*h&&!seen[q]&&p[q*4+3]>=25){seen[q]=1;group.push(q);}}largest=Math.max(largest,group.length);groups.push(group);}
+  for(const group of groups)if(group.length<largest*threshold)for(const n of group)p[n*4+3]=0;c.putImageData(d,0,0);return source;
+}
+function add(key,label,img,box,bg){const image=trim(clearFragments(cut(img,box,bg),key.startsWith("pearl-")?.04:.01));stickerAssets[key]={label,image,url:image.toDataURL()};}
 export async function prepareAssets(){
   const ids=Array.from({length:16},(_,i)=>i+1);
   const pairs=await Promise.all(ids.map(async id=>[id,await load(`assets/references/ref-${id}.png`)]));const refs=Object.fromEntries(pairs);
   const labels=['별','하트','초승달','반짝','십자가','꽃','무한','리본','왕관','물결 하트','나비','스플래시','링','장미','좋아요'];
   const keys=['star','heart','planet','spark','cross','flower','infinity','ribbon','crown','wave-heart','butterfly','splash','ring','rose','thumb'];
-  keys.forEach((key,i)=>add(key,`크롬 ${labels[i]}`,refs[4],[(i%3)*187,Math.floor(i/3)*200,187,200],247));
+  const chromeBoxes=[[25,45,170,170],[205,65,155,140],[378,50,165,155],[25,235,165,175],[205,230,155,170],[370,230,177,180],[25,435,165,115],[198,432,165,145],[373,437,175,118],[20,600,175,170],[194,610,175,147],[373,604,175,166],[20,808,177,155],[199,810,166,145],[386,776,150,175]];
+  keys.forEach((key,i)=>add(key,`크롬 ${labels[i]}`,refs[4],chromeBoxes[i],247));
   const pearls=[[35,60,330,310],[380,65,345,325],[755,65,365,350],[150,365,225,340],[425,395,310,260],[785,435,340,410],[20,700,310,275],[375,655,475,650],[840,875,260,275],[20,995,350,245],[820,1170,285,300],[80,1240,510,475],[585,1350,225,195],[705,1530,440,325],[60,1730,345,300],[425,1705,320,325]];
   pearls.forEach((box,i)=>add(`pearl-${i}`,['진주 나비','오팔 소라','자개 고둥','빛나는 소라','구름','조개 한 쌍','불가사리','해파리','핑크 하트','진주 조개','보라 조개','산호','오팔','자개 조개','흰 소라','핑크 별'][i],refs[5],box,255));
   for(let row=0;row<8;row++)for(let col=0;col<4;col++)add(row===0&&col===0?'smile':`emoji-${row}-${col}`,`표정 ${row*4+col+1}`,refs[9],[48+col*128,15+row*136,120,127],255);
-  for(let row=0;row<7;row++)for(let col=0;col<4;col++)add(`mood-${row}-${col}`,`무드 ${row*4+col+1}`,refs[10],[col*288,row*292,288,292],229);
+  for(let row=0;row<7;row++)for(let col=0;col<4;col++)add(`mood-${row}-${col}`,`무드 ${row*4+col+1}`,refs[10],[col*288,[0,340,660,950,1230,1490,1760][row],288,[340,320,290,280,260,270,288][row]],229);
   // RGBA cutouts replace references with a baked-in checkerboard.
   for(const [key,label] of [['glass-heart','유리 하트'],['glass-spark','유리 반짝'],['glass-moon','유리 달'],['bubble-sheet','버블 시트']]){
     const image=await load(`assets/stickers/${key}.png`);

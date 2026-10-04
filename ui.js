@@ -10,7 +10,7 @@ export function setupStudioUI() {
     detail.append(summary, content); left.append(detail); return detail;
   }
   const panels = {photo:section('사진', 'photo', photo, true),text:section('텍스트', 'text', text)};
-  text.querySelector('.tool-label')?.remove(); paper.querySelector('.tool-label')?.remove();paper.className='canvas-settings';$('.download-row').before(paper);
+  text.querySelector('.tool-label')?.remove(); paper.querySelector('.tool-label')?.remove();paper.className='canvas-settings';$('.canvas-wrap').before(paper);
   const stickerSection = $('.sticker-section');
   const stickerPane = document.createElement('div'), layerPane = document.createElement('div'), templatePane = document.createElement('div');
   const grid = $('#stickerGrid');
@@ -55,6 +55,28 @@ export function setupStudioUI() {
   $('#stickerGrid').addEventListener('click',()=>selectTab('layers'));
   $('#customSticker').addEventListener('change',()=>selectTab('layers'));
   new MutationObserver(()=>{if(!$('#textEditor').hidden){panels.text.open=true;if(matchMedia('(max-width: 760px)').matches)mobile('text');}}).observe($('#textEditor'),{attributes:true,attributeFilter:['hidden']});
+
+  const shell=$('.editor-shell');
+  for(const [key,panel,label]of [['left',left,'편집 도구'],['right',right,'소재']]){
+    const rail=document.createElement('div');rail.className='side-rail side-'+key;panel.before(rail);rail.append(panel);
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='panel-toggle';toggle.id='toggle-'+key;toggle.textContent=key==='left'?'‹':'›';toggle.setAttribute('aria-label',label+' 접기');toggle.setAttribute('aria-expanded','true');panel.id='panel-'+key;toggle.setAttribute('aria-controls',panel.id);rail.prepend(toggle);
+    toggle.onclick=()=>{const collapsed=shell.classList.toggle(key+'-collapsed');toggle.setAttribute('aria-expanded',String(!collapsed));toggle.setAttribute('aria-label',label+(collapsed?' 펼치기':' 접기'));toggle.textContent=collapsed?label:(key==='left'?'‹':'›');panel.inert=collapsed&&!matchMedia("(max-width: 760px)").matches;};
+  }
+  window.addEventListener('resize',()=>{left.inert=shell.classList.contains('left-collapsed')&&innerWidth>760;right.inert=shell.classList.contains('right-collapsed')&&innerWidth>760;});
+  function advanced(parent,ids,label){const d=document.createElement('details');d.className='advanced-controls';const h=document.createElement('summary');h.textContent=label;d.append(h);for(const id of ids){const el=$('#'+id);d.append(el.closest('label'));}parent.append(d);}
+  advanced($('#customLayout'),['slotX','slotY','slotW','slotH'],'칸 위치 · 크기');
+  advanced($('#photoRotate').closest('.tool-block'),['photoRotate'],'사진 회전');
+  advanced($('#textEditor'),['textX','textY','textRotation'],'텍스트 위치 · 회전');
+  // Numeric editors mirror live values even when the canvas changes selection.
+  for(const range of document.querySelectorAll('input[type=range]')){
+    const number=document.createElement('input');number.type='number';number.className='precision-input';number.id=range.id+'Value';number.setAttribute('aria-label',range.closest('label').childNodes[0].textContent.trim()+' 수치');range.after(number);
+    const sync=()=>{for(const attr of ['min','max','step'])number[attr]=range[attr]||'1';if(document.activeElement!==number)number.value=range.value;number.disabled=range.disabled;};sync();range.addEventListener('input',sync);
+    number.onchange=()=>{const v=Number(number.value);if(!Number.isFinite(v))return sync();range.value=Math.max(Number(range.min),Math.min(Number(range.max),v));range.dispatchEvent(new Event('input',{bubbles:true}));sync();};
+    new MutationObserver(sync).observe(range,{attributes:true});range._syncNumber=sync;
+  }
+  // Existing controls update their value properties after drag/selection.
+  let syncFrame;const syncNumbers=()=>{cancelAnimationFrame(syncFrame);syncFrame=requestAnimationFrame(()=>document.querySelectorAll('input[type=range]').forEach(r=>r._syncNumber()));};
+  document.addEventListener('pointerup',syncNumbers);document.addEventListener('change',syncNumbers);document.addEventListener('click',syncNumbers);document.addEventListener('keyup',syncNumbers);
 
   const balloon=document.createElement('div');balloon.id='helpBalloon';balloon.setAttribute('role','tooltip');balloon.hidden=true;document.body.append(balloon);
   function help(anchor, source, label='도움말') {
