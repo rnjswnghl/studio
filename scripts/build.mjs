@@ -1,5 +1,5 @@
 import {mkdirSync,copyFileSync,cpSync} from 'node:fs';
 mkdirSync('dist',{recursive:true});
-for(const file of ['index.html','app.js','assets.js','editing.js','text.js','export.js','ui.js','brand.svg','styles.css'])copyFileSync(file,'dist/'+file);
+for(const file of ['index.html','app.js','assets.js','editing.js','text.js','export.js','ui.js','quick-edit.js','brand.svg','styles.css'])copyFileSync(file,'dist/'+file);
 for(const dir of ['assets','samples'])cpSync(dir,'dist/'+dir,{recursive:true});
 console.log('Static build ready: dist');

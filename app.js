@@ -1,3 +1,4 @@
+import {setupQuickEdit} from "./quick-edit.js";
 import { setupStudioUI } from "./ui.js";
 import { canvasPdf } from "./export.js";
 import { TEXT_FONTS, textLayer, migrateTexts, validTexts } from "./text.js";
@@ -71,7 +72,7 @@ export function validateProject(data) {
       typeof record.name === "string" && record.position &&
       Number.isFinite(record.position.x) && Number.isFinite(record.position.y) &&
       (record.zoom === undefined || (Number.isFinite(record.zoom) && record.zoom >= .5 && record.zoom <= 4)) &&
-      (record.rotate === undefined || (Number.isFinite(record.rotate) && record.rotate >= -180 && record.rotate <= 180))
+      (record.rotate === undefined || (Number.isFinite(record.rotate) && record.rotate >= -180 && record.rotate <= 180)) && (record.flip === undefined || typeof record.flip === "boolean")
     ));
     if (!valid) return "사진 데이터가 올바르지 않습니다.";
   }
@@ -95,8 +96,8 @@ function setRatio(ratio) {
 function roundedRect(c, x, y, w, h, r) {
   c.beginPath(); c.roundRect(x,y,w,h,r); c.closePath();
 }
-function coverImage(c, img, x, y, w, h, position={x:.5,y:.5}, zoom=1, rotate=0) {
-  c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.translate(x+w/2,y+h/2);c.rotate(rotate*Math.PI/180);c.scale(zoom,zoom);x=-w/2;y=-h/2;
+function coverImage(c, img, x, y, w, h, position={x:.5,y:.5}, zoom=1, rotate=0, flip=false) {
+  c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.translate(x+w/2,y+h/2);c.rotate(rotate*Math.PI/180);c.scale(flip?-zoom:zoom,zoom);x=-w/2;y=-h/2;
   const ir = img.width / img.height, tr = w / h;
   let sw, sh, sx, sy;
   const px=clamp(Number(position.x),0,1), py=clamp(Number(position.y),0,1);
@@ -109,7 +110,7 @@ function drawPlaceholder(c,x,y,w,h,index) {
   c.strokeStyle="rgba(225,225,235,.2)"; c.lineWidth=Math.max(2,w*.006); c.beginPath(); c.moveTo(x,y+h); c.lineTo(x+w*.36,y+h*.58); c.lineTo(x+w*.56,y+h*.73); c.lineTo(x+w,y+h*.3); c.stroke();
 }
 function imageForSlot(index){return state.images[index] || null; }
-function drawSlot(c,x,y,w,h,index) { const record=imageForSlot(index); if(record?.img) coverImage(c,record.img,x,y,w,h,record.position,record.zoom??1,record.rotate??0); else drawPlaceholder(c,x,y,w,h,index); }
+function drawSlot(c,x,y,w,h,index) { const record=imageForSlot(index); if(record?.img) coverImage(c,record.img,x,y,w,h,record.position,record.zoom??1,record.rotate??0,record.flip??false); else drawPlaceholder(c,x,y,w,h,index); }
 
 function slotRects(w,h,t=activeTemplate()){
  if(t.frame==="custom")return (state.customSlots||[]).map(r=>({x:r.x*w,y:r.y*h,w:r.w*w,h:r.h*h}));
@@ -144,7 +145,7 @@ function drawCaption(c,w,h,text) {
 }
 function draw(target=canvas, targetState=state) {
   const c=target.getContext("2d"), w=target.width,h=target.height; c.clearRect(0,0,w,h);
-  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); for(const text of state.texts||[])drawCaption(c,w,h,text);if(target===canvas)drawSelection(c,w,h); Object.assign(state,original);
+  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); for(const text of state.texts||[])drawCaption(c,w,h,text);if(target===canvas){drawSelection(c,w,h);quickUI?.update();} Object.assign(state,original);
   $("#emptyCanvas").hidden = activeTemplate().frame==="custom" || state.layers?.length || state.images.some(Boolean) || state.texts?.some(t=>t.caption.trim());
 }
 
@@ -178,11 +179,11 @@ async function handleImages(files){
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);});}
 function imageFromDataUrl(dataUrl){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error("이미지 데이터를 읽지 못했습니다."));img.src=dataUrl;});}
 async function loadImageFile(file){const dataUrl=await fileToDataUrl(file);const img=await imageFromDataUrl(dataUrl);return{img,dataUrl,name:file.name,type:file.type,position:{x:.5,y:.5}};}
-async function restoreImageRecord(record){const img=await imageFromDataUrl(record.dataUrl);return{img,dataUrl:record.dataUrl,name:record.name||"복원한 사진",type:record.type||dataUrlType(record.dataUrl),position:normalisePosition(record.position),zoom:clamp(Number(record.zoom??1),.5,4),rotate:clamp(Number(record.rotate??0),-180,180)};}
+async function restoreImageRecord(record){const img=await imageFromDataUrl(record.dataUrl);return{img,dataUrl:record.dataUrl,name:record.name||"복원한 사진",type:record.type||dataUrlType(record.dataUrl),position:normalisePosition(record.position),zoom:clamp(Number(record.zoom??1),.5,4),rotate:clamp(Number(record.rotate??0),-180,180),flip:record.flip??false};}
 function dataUrlType(value){return /^data:(image\/(?:png|jpeg));base64,/i.exec(value)?.[1]?.toLowerCase()||"";}
 function normalisePosition(value){return{x:clamp(Number(value?.x),0,1),y:clamp(Number(value?.y),0,1)};}
 function clamp(value,min,max){return Number.isFinite(value)?Math.min(max,Math.max(min,value)):(min+max)/2;}
-function renderFileList(){syncPhotoControls();const old=$("#fileList");old.innerHTML="";state.images.forEach((record,i)=>{if(!record)return;const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${record.name}`;img.src=record.dataUrl;const item=document.createElement("button");item.type="button";item.className="photo-thumb-button";const visible=i<photoCount();item.disabled=!visible;item.title=visible?`${i+1}번 칸 선택`:`${i+1}번 사진 · 프레임 밖에 보관 중`;const label=document.createElement("small");label.textContent=`${i+1}번${visible?"":" · 보관"}`;item.append(img,label);item.onclick=()=>{$("#photoSlot").value=i;syncPhotoControls();};old.append(item);});}
+function renderFileList(){syncPhotoControls();const old=$("#fileList");old.innerHTML="";state.images.forEach((record,i)=>{if(!record)return;const img=document.createElement("img");img.className="file-thumb";img.alt=`선택한 사진 ${i+1}: ${record.name}`;img.src=record.dataUrl;const item=document.createElement("button");item.type="button";item.className="photo-thumb-button";const visible=i<photoCount();item.disabled=!visible;item.title=visible?`${i+1}번 칸 선택`:`${i+1}번 사진 · 프레임 밖에 보관 중`;const label=document.createElement("small");label.textContent=`${i+1}번${visible?"":" · 보관"}`;item.append(img,label);item.onclick=()=>{$("#photoSlot").value=i;selectedPhoto=i;selectedLayer=null;syncPhotoControls();draw();};old.append(item);});}
 
 let pendingSlot=0,dragState=null;
 function canvasPoint(event){const rect=canvas.getBoundingClientRect();return{x:(event.clientX-rect.left)*canvas.width/rect.width,y:(event.clientY-rect.top)*canvas.height/rect.height};}
@@ -191,7 +192,7 @@ async function loadIntoSlot(file,index){if(!file)return;try{if(!["image/png","im
 function bindCanvasEditing(){
   canvas.addEventListener("dblclick",event=>{const index=slotAt(event);if(index<0)return;pendingSlot=index;$("#slotImageInput").click();});
   $("#slotImageInput").addEventListener("change",event=>{loadIntoSlot(event.target.files[0],pendingSlot);event.target.value="";});
-  canvas.addEventListener("pointerdown",event=>{if(freePointerDown(event))return;const index=slotAt(event),record=imageForSlot(index);if(index<0||!record)return;checkpoint();if(!state.images[index])state.images[index]={...record,position:{...record.position}};$("#photoSlot").value=index;syncPhotoControls();const activeRecord=state.images[index];const p=canvasPoint(event);dragState={index,record:activeRecord,start:p,origin:{...activeRecord.position}};canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");});
+  canvas.addEventListener("pointerdown",event=>{if(freePointerDown(event))return;const index=slotAt(event),record=imageForSlot(index);if(index<0||!record)return;checkpoint();if(!state.images[index])state.images[index]={...record,position:{...record.position}};$("#photoSlot").value=index;selectedPhoto=index;syncPhotoControls();draw();const activeRecord=state.images[index];const p=canvasPoint(event);dragState={index,record:activeRecord,start:p,origin:{...activeRecord.position}};canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");});
   canvas.addEventListener("pointermove",event=>{if(freePointerMove(event))return;if(!dragState)return;const p=canvasPoint(event),rect=slotRects(canvas.width,canvas.height)[dragState.index];const a=-(state.frameRotation??0)*Math.PI/180,dx=p.x-dragState.start.x,dy=p.y-dragState.start.y;dragState.record.position={x:clamp(dragState.origin.x-(dx*Math.cos(a)-dy*Math.sin(a))/rect.w,0,1),y:clamp(dragState.origin.y-(dx*Math.sin(a)+dy*Math.cos(a))/rect.h,0,1)};draw();});
   const finish=()=>{finishFreeDrag();if(!dragState)return;dragState=null;canvas.classList.remove("dragging");scheduleSave();};
   canvas.addEventListener("pointerup",finish);canvas.addEventListener("pointercancel",finish);
@@ -210,7 +211,7 @@ function bindEvents(){
   $("#openImport").addEventListener("click",()=>$("#importDialog").showModal()); $("#jsonInput").addEventListener("change",importProject);
   $("#privacyInfo").addEventListener("click",()=>$("#infoDialog").showModal());
   $("#savedTemplateList").addEventListener("click",e=>{const b=e.target.closest('[data-saved-template]');if(!b)return;const t=userTemplates.find(t=>t.id===b.dataset.savedTemplate);if(t){$("#templateName").value=t.name;applyTemplateSettings(t);}});
-  $("#resetTemplate").addEventListener("click",async()=>{const t=activeTemplate();await applyTemplateSettings({...t,texts:migrateTexts(t),layers:t.layers??(t.sticker?[stickerLayer(t.sticker)]:[])});state.images=state.images.map(r=>r?{...r,position:{x:.5,y:.5},zoom:1,rotate:0}:null);refreshEdit();$("#statusText").textContent="템플릿 초기화됨";});
+  $("#resetTemplate").addEventListener("click",async()=>{const t=activeTemplate();await applyTemplateSettings({...t,texts:migrateTexts(t),layers:t.layers??(t.sticker?[stickerLayer(t.sticker)]:[])});state.images=state.images.map(r=>r?{...r,position:{x:.5,y:.5},zoom:1,rotate:0,flip:false}:null);refreshEdit();$("#statusText").textContent="템플릿 초기화됨";});
   $("#saveTemplate").addEventListener("click",saveTemplate); $("#updateTemplate").addEventListener("click",updateTemplate); $("#deleteTemplate").addEventListener("click",deleteTemplate);
   bindCanvasEditing();
 }
@@ -220,7 +221,7 @@ async function downloadPng(){
  if(format==="pdf"){a.href=URL.createObjectURL(canvasPdf(output));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
  else{a.href=output.toDataURL(format==="jpg"?"image/jpeg":"image/png",.98);a.click();}
 }
-function serialiseImage(record){return record?{name:record.name,type:record.type,dataUrl:record.dataUrl,position:normalisePosition(record.position),zoom:record.zoom??1,rotate:record.rotate??0}:null;}
+function serialiseImage(record){return record?{name:record.name,type:record.type,dataUrl:record.dataUrl,position:normalisePosition(record.position),zoom:record.zoom??1,rotate:record.rotate??0,flip:record.flip??false}:null;}
 function exportProject(){const payload={version:2,exportedAt:new Date().toISOString(),state:{...state,images:state.images.map(serialiseImage)},templates:userTemplates};const a=document.createElement("a");a.download="cutnote-project.json";a.href=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}));a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 async function importProject(e){
  const file=e.target.files[0];if(!file)return;
@@ -269,7 +270,7 @@ function syncControls(){$("#backgroundColor").value=state.backgroundColor||"#171
 
 
 
-let selectedLayer=null,freeDrag=null;
+let selectedLayer=null,freeDrag=null,selectedPhoto=null,quickUI=null;
 const undoStack=[],redoStack=[];
 function migrateLayers(){state.texts=migrateTexts(state);if(!Array.isArray(state.layers))state.layers=state.sticker&&STICKERS[state.sticker]?[stickerLayer(state.sticker,{x:state.stickerX??.82,y:state.stickerY??.17,size:state.stickerSize??.19})]:[];selectedLayer=state.layers.at(-1)?.id??null;}
 function snapshot(){return {state:{...state,customSlots:structuredClone(state.customSlots||[]),layers:structuredClone(state.layers||[]),texts:structuredClone(state.texts||[]),images:state.images.map(r=>r?{...r,position:{...r.position}}:null)},templates:structuredClone(userTemplates),selectedLayer};}
@@ -290,6 +291,13 @@ function syncLayerControls(){
 function deleteSelected(){if(selectedText()){deleteText();return;}const l=chosen();if(!l)return;checkpoint();state.layers=state.layers.filter(x=>x.id!==l.id);selectedLayer=null;refreshEdit();}
 function bindFreeEditing(){
  bindPhotoControls();
+ quickUI=setupQuickEdit({canvas,wrap:canvas.parentElement,checkpoint,
+ getTarget:()=>{const l=chosen();if(l){const r=layerBounds(l,STICKERS[l.key].image,canvas.width,canvas.height);return {kind:'sticker',item:l,bounds:{...r,angle:l.rotation}};}
+ if(selectedLayer||selectedPhoto===null)return null;const item=imageForSlot(selectedPhoto),r=slotRects(canvas.width,canvas.height)[selectedPhoto];if(!item||!r)return null;
+ const angle=activeTemplate().frame==='custom'?0:state.frameRotation??0,a=angle*Math.PI/180,cx=canvas.width*(state.frameX??.5),cy=canvas.height*(state.frameY??.465),dx=r.x+r.w/2-cx,dy=r.y+r.h/2-cy;return {kind:'photo',item,bounds:{x:cx+dx*Math.cos(a)-dy*Math.sin(a),y:cy+dx*Math.sin(a)+dy*Math.cos(a),w:r.w,h:r.h,angle}};},
+ change:()=>{syncPhotoControls();syncLayerControls();draw();},finish:()=>{scheduleSave();},
+ remove:()=>{if(chosen())deleteSelected();else if(selectedPhoto!==null){checkpoint();state.images[selectedPhoto]=null;selectedPhoto=null;renderFileList();refreshEdit();}}
+ });
  $("#customSticker").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(!["image/png","image/jpeg"].includes(file.type))throw new Error("PNG 또는 JPEG 파일만 사용할 수 있어요.");const r=await loadImageFile(file),key="custom-"+crypto.randomUUID();checkpoint();STICKERS[key]={label:file.name,image:r.img,url:r.dataUrl};const l=stickerLayer(key,{dataUrl:r.dataUrl,label:file.name,x:.5,y:.5});state.layers.push(l);selectedLayer=l.id;refreshEdit();}catch(err){$("#fileError").textContent=err.message;}e.target.value="";};
  canvas.tabIndex=0;
  $("#layerList").addEventListener("change",e=>{selectedLayer=e.target.value;if(selectedText()){textEditorOpen=true;activeTextId=selectedLayer;}syncTextControls();syncLayerControls();draw();});
@@ -316,8 +324,8 @@ function freePointerDown(event){
  const index=slotAt(event);if(index>=0){checkpoint();$("#photoSlot").value=index;syncPhotoControls();freeDrag={action:"slot",index,start:p,origin:{...state.customSlots[index]}};canvas.setPointerCapture(event.pointerId);return true;}
  }
  if(selectedLayer==="frame"&&!kind&&activeTemplate().frame!=="custom")kind="frame";
- if(!kind){selectedLayer=null;syncLayerControls();draw();return false;}
- selectedLayer=kind;if(selectedText()){activeTextId=kind;textEditorOpen=true;syncTextControls();}checkpoint();const item=chosen();const origin=item?{x:item.x,y:item.y}:selectedText()?{x:selectedText().captionX,y:selectedText().captionY}:{x:state.frameX??.5,y:state.frameY??.465};
+ if(!kind){selectedLayer=null;selectedPhoto=null;syncLayerControls();draw();return false;}
+ selectedPhoto=null;selectedLayer=kind;if(selectedText()){activeTextId=kind;textEditorOpen=true;syncTextControls();}checkpoint();const item=chosen();const origin=item?{x:item.x,y:item.y}:selectedText()?{x:selectedText().captionX,y:selectedText().captionY}:{x:state.frameX??.5,y:state.frameY??.465};
  freeDrag={start:p,origin,kind};canvas.focus();canvas.setPointerCapture(event.pointerId);canvas.classList.add("dragging");syncLayerControls();return true;
 }
 function freePointerMove(event){if(!freeDrag)return false;const p=canvasPoint(event);if(freeDrag.action==="slot"){const r=state.customSlots[freeDrag.index];r.x=clamp(freeDrag.origin.x+(p.x-freeDrag.start.x)/canvas.width,0,1-r.w);r.y=clamp(freeDrag.origin.y+(p.y-freeDrag.start.y)/canvas.height,0,1-r.h);draw();syncCustomControls();return true;}if(freeDrag.action){const l=chosen(),dx=p.x-freeDrag.center.x,dy=p.y-freeDrag.center.y;if(freeDrag.action==="rotate")l.rotation=freeDrag.rotation+(Math.atan2(dy,dx)-freeDrag.angle)*180/Math.PI;else l.size=clamp(freeDrag.size*Math.hypot(dx,dy)/Math.max(1,freeDrag.distance),.01,3);draw();syncLayerControls();return true;}const x=freeDrag.origin.x+(p.x-freeDrag.start.x)/canvas.width,y=freeDrag.origin.y+(p.y-freeDrag.start.y)/canvas.height;const l=chosen();if(l){l.x=x;l.y=y;}else if(selectedText()){selectedText().captionX=x;selectedText().captionY=y;syncTextControls();}else{state.frameX=x;state.frameY=y;}draw();syncLayerControls();return true;}
@@ -337,7 +345,7 @@ function syncPhotoControls(){
  $("#photoBefore").disabled=i===0;$("#photoAfter").disabled=count===0||i===count-1;
 }
 function bindPhotoControls(){
- $("#photoSlot").onchange=syncPhotoControls;
+ $("#photoSlot").onchange=()=>{selectedPhoto=Number($("#photoSlot").value);selectedLayer=null;syncPhotoControls();draw();};
  for(const [id,key] of [["photoZoom","zoom"],["photoRotate","rotate"]]){$("#"+id).oninput=e=>{const i=Number($("#photoSlot").value),r=imageForSlot(i);if(r){checkpoint();state.images[i]={...r,position:{...r.position},[key]:Number(e.target.value)};draw();syncLayerControls();scheduleSave();}};}
  $("#replacePhoto").onclick=()=>{pendingSlot=Number($("#photoSlot").value);$("#slotImageInput").click();};
  $("#removePhoto").onclick=()=>{checkpoint();state.images[Number($("#photoSlot").value)]=null;renderFileList();refreshEdit();};
