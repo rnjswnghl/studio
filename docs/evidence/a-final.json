@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "checksVersion": "T05-v1",
+  "stage": "a-final",
+  "startedAt": "2026-10-13T12:33:04.046Z",
+  "endedAt": "2026-10-13T12:35:49.296Z",
+  "pass": 4,
+  "total": 10,
+  "results": [
+    {
+      "id": "T05-01",
+      "status": "PASS",
+      "milliseconds": 15086
+    },
+    {
+      "id": "T05-02",
+      "status": "PASS",
+      "milliseconds": 23787
+    },
+    {
+      "id": "T05-03",
+      "status": "FAIL",
+      "milliseconds": 19333,
+      "error": "locator.evaluate: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#lockLayer')\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "id": "T05-04",
+      "status": "FAIL",
+      "milliseconds": 19209,
+      "error": "locator.evaluate: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#lockLayer')\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "id": "T05-05",
+      "status": "FAIL",
+      "milliseconds": 19110,
+      "error": "locator.evaluate: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#lockLayer')\u001b[22m\n",
+      "runtimeErrors": []
+    },
+    {
+      "id": "T05-06",
+      "status": "FAIL",
+      "milliseconds": 10835,
+      "error": "Number missing: 크롬 하트",
+      "runtimeErrors": []
+    },
+    {
+      "id": "T05-07",
+      "status": "FAIL",
+      "milliseconds": 9252,
+      "error": "Number missing: heart.png",
+      "runtimeErrors": []
+    },
+    {
+      "id": "T05-08",
+      "status": "PASS",
+      "milliseconds": 11699
+    },
+    {
+      "id": "T05-09",
+      "status": "PASS",
+      "milliseconds": 10993
+    },
+    {
+      "id": "T05-10",
+      "status": "FAIL",
+      "milliseconds": 16968,
+      "error": "locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-pane=\"stickers\"]')\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"tab\" type=\"button\" tabindex=\"-1\" id=\"tab-stickers\" data-pane=\"stickers\" aria-selected=\"false\" aria-controls=\"pane-stickers\">스티커</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    19 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "runtimeErrors": []
+    }
+  ]
+}

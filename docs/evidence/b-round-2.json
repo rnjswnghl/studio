@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "checksVersion": "T05-v1",
+  "stage": "b-final",
+  "startedAt": "2026-10-13T12:46:47.523Z",
+  "endedAt": "2026-10-13T12:49:51.017Z",
+  "pass": 9,
+  "total": 10,
+  "results": [
+    {
+      "id": "T05-01",
+      "status": "PASS",
+      "milliseconds": 14844
+    },
+    {
+      "id": "T05-02",
+      "status": "PASS",
+      "milliseconds": 26531
+    },
+    {
+      "id": "T05-03",
+      "status": "PASS",
+      "milliseconds": 13310
+    },
+    {
+      "id": "T05-04",
+      "status": "PASS",
+      "milliseconds": 15869
+    },
+    {
+      "id": "T05-05",
+      "status": "PASS",
+      "milliseconds": 14946
+    },
+    {
+      "id": "T05-06",
+      "status": "PASS",
+      "milliseconds": 19001
+    },
+    {
+      "id": "T05-07",
+      "status": "PASS",
+      "milliseconds": 19124
+    },
+    {
+      "id": "T05-08",
+      "status": "PASS",
+      "milliseconds": 20393
+    },
+    {
+      "id": "T05-09",
+      "status": "PASS",
+      "milliseconds": 15022
+    },
+    {
+      "id": "T05-10",
+      "status": "FAIL",
+      "milliseconds": 11080,
+      "error": "locator.click: Error: strict mode violation: locator('[data-mobile=library]') resolved to 2 elements:\n    1) <button type=\"button\" class=\"active\" aria-pressed=\"true\" data-mobile=\"library\">소재</button> aka getByRole('button', { name: '소재', exact: true })\n    2) <section aria-pressed=\"true\" aria-label=\"이미지 편집기\" data-mobile=\"library\" class=\"editor-shell active\">…</section> aka getByRole('region', { name: '이미지 편집기' })\n\nCall log:\n\u001b[2m  - waiting for locator('[data-mobile=library]')\u001b[22m\n",
+      "runtimeErrors": []
+    }
+  ]
+}

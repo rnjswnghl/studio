@@ -78,7 +78,7 @@
 
         <section class="stage" aria-label="미리보기">
           <div class="stage-topline"><button id="resetTemplate" class="text-button" type="button" title="선택 템플릿의 저장된 구성과 사진 크롭으로 되돌립니다. 사진 원본은 유지하며 실행 취소할 수 있습니다.">초기화</button>
-            <span>LIVE PREVIEW</span>
+            <span>LIVE PREVIEW</span><button id="toggleGrid" class="grid-toggle" type="button" aria-pressed="false" aria-controls="preview" title="편집용 10등분 격자와 중심선입니다. 저장 파일에는 포함되지 않습니다.">격자 보기</button>
             <span id="canvasSize">1080 × 1080 px</span>
           </div>
           <div class="canvas-wrap">
@@ -106,7 +106,7 @@
           <div class="sticker-section">
             <div class="tool-label"><span>05</span><strong>스티커</strong></div>
             <label class="sticker-control">내 이미지 스티커 <input id="customSticker" type="file" accept="image/png,image/jpeg" /></label><div class="sticker-grid" id="stickerGrid"></div>
-            <p class="edit-hint">소재를 누를 때마다 추가됩니다. 캔버스에서 직접 드래그하거나 아래 목록에서 선택하세요.</p><label class="sticker-control">편집 대상 <select id="layerList" aria-label="편집할 레이어"></select></label><label class="sticker-control">크기 <input id="stickerSize" type="range" min="1" max="200" value="19" /></label><label class="sticker-control">가로 위치 <input id="stickerX" type="range" min="-50" max="150" value="82" /></label><label class="sticker-control">세로 위치 <input id="stickerY" type="range" min="-50" max="150" value="17" /></label><label class="sticker-control">회전 <input id="layerRotation" type="range" min="-180" max="180" value="0" /></label><label class="sticker-control">불투명도 <input id="layerOpacity" type="range" min="0" max="100" value="100" /></label><div class="layer-actions"><button id="duplicateLayer" type="button">복제</button><button id="flipLayer" type="button">좌우 반전</button><button id="layerForward" type="button">앞으로</button><button id="layerBackward" type="button">뒤로</button><button id="removeSticker" type="button">선택 삭제</button><button id="undoEdit" type="button">실행 취소</button><button id="redoEdit" type="button">다시 실행</button></div>
+            <p class="edit-hint">소재를 누를 때마다 추가됩니다. 캔버스에서 직접 드래그하거나 아래 목록에서 선택하세요.</p><label class="sticker-control">편집 대상 <select id="layerList" aria-label="편집할 레이어"></select></label><label class="sticker-control">크기 <input id="stickerSize" type="range" min="1" max="200" value="19" /></label><label class="sticker-control">가로 위치 <input id="stickerX" type="range" min="-50" max="150" value="82" /></label><label class="sticker-control">세로 위치 <input id="stickerY" type="range" min="-50" max="150" value="17" /></label><label class="sticker-control">회전 <input id="layerRotation" type="range" min="-180" max="180" value="0" /></label><label class="sticker-control">불투명도 <input id="layerOpacity" type="range" min="0" max="100" value="100" /></label><div class="layer-actions"><button id="lockLayer" type="button" aria-pressed="false" disabled>레이어 잠금</button><button id="duplicateLayer" type="button">복제</button><button id="flipLayer" type="button">좌우 반전</button><button id="layerForward" type="button">앞으로</button><button id="layerBackward" type="button">뒤로</button><button id="removeSticker" type="button">선택 삭제</button><button id="undoEdit" type="button">실행 취소</button><button id="redoEdit" type="button">다시 실행</button></div>
           </div>
 
           <div class="template-manager">
@@ -119,7 +119,10 @@
               <button id="updateTemplate" type="button">선택 템플릿 덮어쓰기</button>
               <button id="deleteTemplate" type="button">삭제</button>
             </div>
-            <p id="templateMessage" aria-live="polite"></p><div class="saved-heading">저장한 템플릿 <span id="savedTemplateCount">0</span></div><p id="savedTemplateEmpty">저장한 템플릿이 없습니다.</p><div id="savedTemplateList" class="template-grid saved-template-list"></div>
+            <p id="templateMessage" aria-live="polite"></p><div class="saved-heading">저장한 템플릿 <span id="savedTemplateCount">0</span></div>
+            <label class="template-search-label" for="templateSearch">내 템플릿 검색</label>
+            <div class="template-search-row"><input id="templateSearch" type="search" placeholder="템플릿 이름으로 검색" autocomplete="off" aria-controls="savedTemplateList" /><button id="clearTemplateSearch" type="button" disabled>지우기</button></div>
+            <p id="templateSearchResult" role="status" aria-live="polite"></p><p id="savedTemplateEmpty">저장한 템플릿이 없습니다.</p><div id="savedTemplateList" class="template-grid saved-template-list"></div>
           </div>
         </aside>
       </section>

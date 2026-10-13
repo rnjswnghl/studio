@@ -1,3 +1,4 @@
+import { validNumber } from './editing.js';
 export const TEXT_FONTS = [
   ['Noto Sans KR', '기본 고딕'], ['Noto Serif KR', '단정한 명조'],
   ['Gowun Dodum', '고운 돋움'], ['Gaegu', '개구쟁이 손글씨'],
@@ -13,7 +14,7 @@ export function migrateTexts(settings) {
 }
 export function validTexts(texts) {
   return Array.isArray(texts) && texts.length <= 100 && texts.every(t => t && typeof t.id==='string' && t.id.length>0 && !['frame','caption'].includes(t.id) &&
-    typeof t.caption==='string' && t.caption.length<=120 && /^#[0-9a-f]{6}$/i.test(t.textColor) &&
+    validNumber(t.number) && typeof t.caption==='string' && t.caption.length<=120 && /^#[0-9a-f]{6}$/i.test(t.textColor) &&
     (t.outline===undefined||typeof t.outline==='boolean') && TEXT_FONTS.some(([font])=>font===t.fontFamily) && Number.isFinite(t.fontSize) && t.fontSize>=18 && t.fontSize<=216 &&
     ['captionX','captionY','captionRotation'].every(k=>Number.isFinite(t[k]))) && new Set(texts.map(t=>t.id)).size===texts.length;
 }
