@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "checksVersion": "T05-v1",
+  "stage": "b-final",
+  "startedAt": "2026-10-13T12:50:29.535Z",
+  "endedAt": "2026-10-13T12:53:13.410Z",
+  "pass": 10,
+  "total": 10,
+  "results": [
+    {
+      "id": "T05-01",
+      "status": "PASS",
+      "milliseconds": 17162
+    },
+    {
+      "id": "T05-02",
+      "status": "PASS",
+      "milliseconds": 33163
+    },
+    {
+      "id": "T05-03",
+      "status": "PASS",
+      "milliseconds": 12714
+    },
+    {
+      "id": "T05-04",
+      "status": "PASS",
+      "milliseconds": 13842
+    },
+    {
+      "id": "T05-05",
+      "status": "PASS",
+      "milliseconds": 12643
+    },
+    {
+      "id": "T05-06",
+      "status": "PASS",
+      "milliseconds": 16001
+    },
+    {
+      "id": "T05-07",
+      "status": "PASS",
+      "milliseconds": 11051
+    },
+    {
+      "id": "T05-08",
+      "status": "PASS",
+      "milliseconds": 10190
+    },
+    {
+      "id": "T05-09",
+      "status": "PASS",
+      "milliseconds": 9336
+    },
+    {
+      "id": "T05-10",
+      "status": "PASS",
+      "milliseconds": 18291
+    }
+  ]
+}

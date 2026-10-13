@@ -1,5 +1,5 @@
 {
-  "endedAt": "2026-10-13T12:49:16.354Z",
+  "endedAt": "2026-10-13T21:58:43.538Z",
   "pass": 3,
   "checks": [
     "Earlier text renamed into an existing group preserves the other ID and undo/redo",

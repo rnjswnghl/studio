@@ -6,8 +6,38 @@
   "startCommit": "3d57de3991fcc1d2b6b70d229608972ea6c9ccde",
   "handoffSHA256": "4CBA43341C2EC034493D49583E5B666DD048990E2B889D1143795C37E4099795",
   "checksBlob": "04a0f8b8879b2240ffd73730f4a7b4291c3c3b83",
-  "userRequests": 1,
+  "userRequests": 2,
   "timeLimitMinutes": 45,
   "requestLimit": 10,
-  "toolCalls": "미측정"
+  "toolCalls": "미측정",
+  "firstTurnDurationMs": 590690,
+  "firstTurnTimingEvidence": "b-interrupted.json: app durationMs",
+  "resumedAt": "2026-10-14T06:56:57.5394645+09:00",
+  "resumedSourceCommit": "082d93096c09c3d635d99b16954ae2464a615a65",
+  "checksHelperBlob": "ad208029f9f28ba09f6c9c3f85357c81cd810d06",
+  "inactiveGapPolicy": "사용량 제한 대기는 실제 작업시간에서 제외. 중단 후 완료된 3회차 검사 시각은 별도로 보존.",
+  "endedAt": "2026-10-13T21:59:33.055Z",
+  "resumedDurationMs": 155516,
+  "totalActiveDurationMs": 746206,
+  "inactiveGap": {
+    "from": "2026-10-13T21:51:39+09:00",
+    "to": "2026-10-14T06:56:57.5394645+09:00",
+    "note": "앱 turn 중단 뒤 3회차 검사 도구가 2026-10-13T12:53:13.410Z에 완료. 이 백그라운드 결과 시각은 turn duration과 구분한다."
+  },
+  "fixedCheckRounds": 4,
+  "errorRounds": 2,
+  "finalPass": 10,
+  "totalChecks": 10,
+  "requirementOmissions": "없음",
+  "nodeTests": {
+    "existing": 14,
+    "additional": 3,
+    "pass": 17
+  },
+  "build": "PASS",
+  "diffExcludingLockfiles": {
+    "added": 689,
+    "deleted": 33
+  },
+  "measurementEnd": "완료 문서 작성 후 로컬 커밋 직전 기록 시각"
 }
