@@ -32,6 +32,8 @@ const INITIAL_STATE = {
 const state = { ...INITIAL_STATE, images: [] };
 let userTemplates = loadUserTemplates();
 let selectedUserTemplateId = null;
+let templateQuery = "";
+let gridVisible = false;
 
 const $ = (selector) => document.querySelector(selector);
 const canvas = $("#preview");
@@ -145,8 +147,15 @@ function drawCaption(c,w,h,text) {
 }
 function draw(target=canvas, targetState=state) {
   const c=target.getContext("2d"), w=target.width,h=target.height; c.clearRect(0,0,w,h);
-  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); for(const text of state.texts||[])drawCaption(c,w,h,text);if(target===canvas){drawSelection(c,w,h);quickUI?.update();} Object.assign(state,original);
+  const original={...state}; Object.assign(state,targetState); drawFrame(c,w,h,activeTemplate()); drawSticker(c,w,h,state.sticker); for(const text of state.texts||[])drawCaption(c,w,h,text);if(target===canvas){if(gridVisible)drawGrid(c,w,h);drawSelection(c,w,h);quickUI?.update();} Object.assign(state,original);
   $("#emptyCanvas").hidden = activeTemplate().frame==="custom" || state.layers?.length || state.images.some(Boolean) || state.texts?.some(t=>t.caption.trim());
+}
+
+// Guides are editor-only: never draw them onto an export canvas or persist them.
+function drawGrid(c,w,h) {
+ c.save();c.lineWidth=1.5;c.strokeStyle="rgba(130,130,150,.5)";c.beginPath();
+ for(let i=1;i<10;i++){c.moveTo(w*i/10,0);c.lineTo(w*i/10,h);c.moveTo(0,h*i/10);c.lineTo(w,h*i/10);}
+ c.stroke();c.lineWidth=2.5;c.strokeStyle="rgba(105,190,205,.85)";c.beginPath();c.moveTo(w/2,0);c.lineTo(w/2,h);c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke();c.restore();
 }
 
 let saveTimer;
@@ -161,8 +170,14 @@ function templateHtml(t){
 }
 function renderTemplates(){
  $("#templateGrid").innerHTML=allTemplates().map(templateHtml).join("");
- $("#savedTemplateList").innerHTML=userTemplates.map(t=>templateHtml(t).replace('data-template=','data-saved-template=')).join("");
- $("#savedTemplateCount").textContent=userTemplates.length;$("#savedTemplateEmpty").hidden=userTemplates.length>0;
+ const normalise=value=>String(value).normalize("NFC").trim().toLocaleLowerCase();
+ const query=normalise(templateQuery),matches=userTemplates.filter(t=>normalise(t.name).includes(query));
+ $("#savedTemplateList").innerHTML=matches.map(t=>templateHtml(t).replace('data-template=','data-saved-template=')).join("");
+ $("#savedTemplateCount").textContent=userTemplates.length;
+ $("#templateSearchResult").textContent=query?`${matches.length}개 검색 결과 · 전체 ${userTemplates.length}개`:`전체 ${userTemplates.length}개`;
+ $("#savedTemplateEmpty").hidden=matches.length>0;
+ $("#savedTemplateEmpty").textContent=userTemplates.length?"검색 결과가 없습니다. 검색어를 바꾸거나 지워보세요.":"저장한 템플릿이 없습니다.";
+ $("#clearTemplateSearch").disabled=!templateQuery;
  selectedUserTemplateId=userTemplates.some(t=>t.id===state.templateId)?state.templateId:null;
  $("#updateTemplate").disabled=$("#deleteTemplate").disabled=!selectedUserTemplateId;
 }
@@ -199,6 +214,9 @@ function bindCanvasEditing(){
 }
 
 function bindEvents(){
+ $("#templateSearch").addEventListener("input",e=>{templateQuery=e.target.value;renderTemplates();});
+ $("#clearTemplateSearch").addEventListener("click",()=>{templateQuery="";$("#templateSearch").value="";renderTemplates();$("#templateSearch").focus();});
+ $("#toggleGrid").addEventListener("click",()=>{gridVisible=!gridVisible;$("#toggleGrid").setAttribute("aria-pressed",String(gridVisible));$("#toggleGrid").textContent=gridVisible?"격자 숨기기":"격자 보기";draw();});
 
   $("#imageInput").addEventListener("change",(e)=>handleImages(e.target.files)); const dz=$("#dropZone");
   ["dragenter","dragover"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.add("drag")})); ["dragleave","drop"].forEach((n)=>dz.addEventListener(n,(e)=>{e.preventDefault();dz.classList.remove("drag")})); dz.addEventListener("drop",(e)=>handleImages(e.dataTransfer.files));

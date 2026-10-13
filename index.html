@@ -78,7 +78,7 @@
 
         <section class="stage" aria-label="미리보기">
           <div class="stage-topline"><button id="resetTemplate" class="text-button" type="button" title="선택 템플릿의 저장된 구성과 사진 크롭으로 되돌립니다. 사진 원본은 유지하며 실행 취소할 수 있습니다.">초기화</button>
-            <span>LIVE PREVIEW</span>
+            <span>LIVE PREVIEW</span><button id="toggleGrid" class="grid-toggle" type="button" aria-pressed="false" aria-controls="preview" title="편집용 10등분 격자와 중심선입니다. 저장 파일에는 포함되지 않습니다.">격자 보기</button>
             <span id="canvasSize">1080 × 1080 px</span>
           </div>
           <div class="canvas-wrap">
@@ -119,7 +119,10 @@
               <button id="updateTemplate" type="button">선택 템플릿 덮어쓰기</button>
               <button id="deleteTemplate" type="button">삭제</button>
             </div>
-            <p id="templateMessage" aria-live="polite"></p><div class="saved-heading">저장한 템플릿 <span id="savedTemplateCount">0</span></div><p id="savedTemplateEmpty">저장한 템플릿이 없습니다.</p><div id="savedTemplateList" class="template-grid saved-template-list"></div>
+            <p id="templateMessage" aria-live="polite"></p><div class="saved-heading">저장한 템플릿 <span id="savedTemplateCount">0</span></div>
+            <label class="template-search-label" for="templateSearch">내 템플릿 검색</label>
+            <div class="template-search-row"><input id="templateSearch" type="search" placeholder="템플릿 이름으로 검색" autocomplete="off" aria-controls="savedTemplateList" /><button id="clearTemplateSearch" type="button" disabled>지우기</button></div>
+            <p id="templateSearchResult" role="status" aria-live="polite"></p><p id="savedTemplateEmpty">저장한 템플릿이 없습니다.</p><div id="savedTemplateList" class="template-grid saved-template-list"></div>
           </div>
         </aside>
       </section>
