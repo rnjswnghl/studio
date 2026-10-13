@@ -1,0 +1,17 @@
+{
+  "measurement": "Observed active intervals, including the background QA and complete resumed turn; inactive usage-limit wait excluded",
+  "startTimestampPrecision": "App turn starts are provided in whole Unix seconds",
+  "firstInterval": {
+    "startedAt": "2026-10-13T12:41:49.000Z",
+    "endedAt": "2026-10-13T12:53:13.410Z",
+    "elapsedSeconds": 684.41
+  },
+  "resumedInterval": {
+    "startedAt": "2026-10-13T21:56:46.000Z",
+    "durationMs": 185073
+  },
+  "totalObservedActiveSeconds": 869.483,
+  "agentRecordedActiveSeconds": 746.206,
+  "firstModelTurnDurationMs": 590690,
+  "note": "Agent timing is preserved separately. The comparison uses the longer observed interval including background QA and initial/final turn work."
+}

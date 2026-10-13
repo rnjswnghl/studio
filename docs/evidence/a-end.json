@@ -1,0 +1,19 @@
+{
+  "label": "A",
+  "startedAt": "2026-10-13T21:32:31.793392+09:00",
+  "endedAt": "2026-10-13T12:41:23.2148887+00:00",
+  "elapsedSeconds": 532.215,
+  "startCommit": "5e21766e267c10ee49500343f60f0e58878f2a6a",
+  "endCommit": "3d57de3991fcc1d2b6b70d229608972ea6c9ccde",
+  "actualRequests": 1,
+  "requestLimit": 10,
+  "timeLimitMinutes": 45,
+  "toolCalls": null,
+  "errorRounds": 2,
+  "pass": 4,
+  "total": 10,
+  "handoffSha256": "4CBA43341C2EC034493D49583E5B666DD048990E2B889D1143795C37E4099795",
+  "freshFolderReproduced": true,
+  "handoffMissing": "없음",
+  "note": "A-final과 A-fresh-reproduction 두 회차 모두 계획된 미구현 검사 6개 FAIL. 준비 단계 baseline 회차는 제외."
+}
