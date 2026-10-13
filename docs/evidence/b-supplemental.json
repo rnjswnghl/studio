@@ -1,0 +1,10 @@
+{
+  "endedAt": "2026-10-13T12:49:16.354Z",
+  "pass": 3,
+  "checks": [
+    "Earlier text renamed into an existing group preserves the other ID and undo/redo",
+    "Canvas reselects a locked sticker over a real photo without moving either; unlock remains reachable",
+    "Legacy JSON with both metadata fields absent migrates to number 1 and unlocked"
+  ],
+  "runtimeErrors": []
+}

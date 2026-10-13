@@ -1,0 +1,17 @@
+{
+  "stage": "B",
+  "status": "usage_limit_interrupted",
+  "firstTurnStartedAt": "2026-10-13T21:41:49+09:00",
+  "firstTurnEndedAt": "2026-10-13T21:51:39+09:00",
+  "firstTurnDurationMs": 590690,
+  "measurementBasis": "Codex wait_threads 실제 첫 turn durationMs",
+  "userRequests": 1,
+  "timeLimitMinutes": 45,
+  "requestLimit": 10,
+  "lastPass": 9,
+  "total": 10,
+  "errorRounds": 2,
+  "sourceRef": "t05-b-interrupted",
+  "snapshotSavedAt": "2026-10-13T21:56:44.1078600+00:00",
+  "inactiveGapPolicy": "외부 사용량 제한으로 실행이 중단된 대기 구간은 별도 기록하며 실제 작업시간에는 합산하지 않는다. 각 실행 구간의 실제 경과시간을 합산한다."
+}

@@ -29,9 +29,13 @@ export function setupStudioUI() {
   }
   for (const [key,label,pane] of entries) {
     pane.id='pane-'+key;pane.classList.add('library-pane');pane.setAttribute('role','tabpanel');pane.setAttribute('aria-labelledby','tab-'+key);
-    const b=document.createElement('button');b.type='button';b.id='tab-'+key;b.dataset.pane=key;b.textContent=label;b.setAttribute('role','tab');b.setAttribute('aria-controls',pane.id);b.onclick=()=>selectTab(key);tabs.append(b);
+    const b=document.createElement('button');b.type='button';b.id='tab-'+key;b.dataset.pane=key;b.textContent=label;b.setAttribute('role','tab');b.setAttribute('aria-controls',pane.id);b.onclick=()=>{selectTab(key);if(matchMedia('(max-width: 760px)').matches)mobile('library');};tabs.append(b);
   }
   right.append(tabs,...entries.map(e=>e[2]));selectTab('templates');
+  // Keep library navigation reachable while mobile photo/text tools are open.
+  const mobileLayout=matchMedia('(max-width: 760px)');
+  function placeLibraryTabs(){if(mobileLayout.matches)$('.studio-bar').after(tabs);else right.prepend(tabs);}
+  mobileLayout.addEventListener('change',placeLibraryTabs);placeLibraryTabs();
   const templateGrid = $('#templateGrid'), pager = document.createElement('div');pager.className='template-pager';
   const previous=document.createElement('button'),next=document.createElement('button'),counter=document.createElement('span');
   previous.type=next.type='button';previous.textContent='←';next.textContent='→';previous.setAttribute('aria-label','이전 템플릿');next.setAttribute('aria-label','다음 템플릿');
@@ -46,7 +50,7 @@ export function setupStudioUI() {
   const history=document.createElement('div');history.className='history-buttons';history.append($('#undoEdit'),$('#redoEdit'));$('.stage-topline').prepend(history);
   $('#undoEdit').textContent='↶';$('#redoEdit').textContent='↷';$('#undoEdit').setAttribute('aria-label','실행 취소');$('#redoEdit').setAttribute('aria-label','다시 실행');
   function mobile(key) {
-    $('.editor-shell').dataset.mobile=key;
+    $('.editor-shell').dataset.mobileView=key;
     document.querySelectorAll('[data-mobile]').forEach(b=>{b.classList.toggle('active',b.dataset.mobile===key);b.setAttribute('aria-pressed',String(b.dataset.mobile===key));});
     if(panels[key])for(const [id,panel]of Object.entries(panels))panel.open=id===key;
   }

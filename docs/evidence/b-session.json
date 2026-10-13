@@ -1,0 +1,13 @@
+{
+  "stage": "B",
+  "startedAt": "2026-10-13T21:42:10.3628937+09:00",
+  "startTimeBasis": "HEAD 및 해시 대조 시 Get-Date로 기록한 실제 시작 시각. 그보다 앞선 최초 문서 읽기 시간은 미측정이며 총시간으로 추정하지 않음.",
+  "verifiedAt": "2026-10-13T21:42:10.3628937+09:00",
+  "startCommit": "3d57de3991fcc1d2b6b70d229608972ea6c9ccde",
+  "handoffSHA256": "4CBA43341C2EC034493D49583E5B666DD048990E2B889D1143795C37E4099795",
+  "checksBlob": "04a0f8b8879b2240ffd73730f4a7b4291c3c3b83",
+  "userRequests": 1,
+  "timeLimitMinutes": 45,
+  "requestLimit": 10,
+  "toolCalls": "미측정"
+}
